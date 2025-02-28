@@ -3,48 +3,81 @@ import * as http from "http";
 import { Server as WebSocketServer } from "socket.io";
 import net from "net";
 import { Chess } from "chess.js";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = new WebSocketServer(server, { cors: { origin: "*" } });
 
-const games: { [key: string]: Chess } = {}; // Store ongoing games
+const games: { [key: string]: { chess: Chess, players: string[] } } = {}; // Store ongoing games and players
 
 io.on("connection", (socket) => {
   console.log("A player connected:", socket.id);
 
   socket.on("createGame", () => {
     const gameId = Math.random().toString(36).substr(2, 6);
-    games[gameId] = new Chess();
+    games[gameId] = { chess: new Chess(), players: [socket.id] };
     socket.join(gameId);
     socket.emit("gameCreated", gameId);
+    console.log(`Game created with ID: ${gameId}`);
   });
 
   socket.on("joinGame", (gameId) => {
+    console.log(`Join game request for ID: ${gameId}`);
     if (games[gameId]) {
+      if (games[gameId].players.includes(socket.id)) {
+        socket.emit("error", "You cannot join the game you created.");
+        return;
+      }
+      games[gameId].players.push(socket.id);
       socket.join(gameId);
       socket.emit("gameJoined", gameId);
+      console.log(`Player joined game with ID: ${gameId}`);
     } else {
+      console.log(`Game not found: ${gameId}`);
       socket.emit("error", "Game not found");
     }
   });
 
   socket.on("move", ({ gameId, move }) => {
-    const game = games[gameId];
+    const game = games[gameId]?.chess;
     if (game && game.move(move)) {
       io.to(gameId).emit("updateBoard", game.fen());
+      console.log(`Move made in game ${gameId}: ${move}`);
     } else {
       socket.emit("error", "Invalid move");
+      console.log(`Invalid move in game ${gameId}: ${move}`);
     }
   });
 
   socket.on("disconnect", () => {
     console.log("A player disconnected:", socket.id);
+    for (const gameId in games) {
+      const game = games[gameId];
+      const playerIndex = game.players.indexOf(socket.id);
+      if (playerIndex !== -1) {
+        game.players.splice(playerIndex, 1);
+        if (game.players.length === 1) {
+          const remainingPlayer = game.players[0];
+          io.to(remainingPlayer).emit("gameOver", "Your opponent left the game. You win!");
+          delete games[gameId];
+          console.log(`Game ${gameId} ended. Player ${remainingPlayer} wins by default.`);
+        } else if (game.players.length === 0) {
+          delete games[gameId];
+          console.log(`Game ${gameId} ended. No players left.`);
+        }
+        break;
+      }
+    }
   });
 });
 
-server.listen(3000, () => {
-  console.log("HTTP/WebSocket server running on port 3000");
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`HTTP/WebSocket server running on port ${port}`);
 });
 
 // TCP server
@@ -57,16 +90,21 @@ const tcpServer = net.createServer((socket) => {
 
     if (command === "createGame") {
       const newGameId = Math.random().toString(36).substr(2, 6);
-      games[newGameId] = new Chess();
+      games[newGameId] = { chess: new Chess(), players: [socket.id] };
       socket.write(`gameCreated ${newGameId}`);
     } else if (command === "joinGame") {
       if (games[gameId]) {
+        if (games[gameId].players.includes(socket.id)) {
+          socket.write("error You cannot join the game you created.");
+          return;
+        }
+        games[gameId].players.push(socket.id);
         socket.write(`gameJoined ${gameId}`);
       } else {
         socket.write("error Game not found");
       }
     } else if (command === "move") {
-      const game = games[gameId];
+      const game = games[gameId]?.chess;
       if (game && game.move(move)) {
         socket.write(`updateBoard ${game.fen()}`);
       } else {
@@ -80,6 +118,7 @@ const tcpServer = net.createServer((socket) => {
   });
 });
 
-tcpServer.listen(4000, () => {
-  console.log("TCP server running on port 4000");
+const tcpPort = process.env.TCP_PORT || 4000;
+tcpServer.listen(tcpPort, () => {
+  console.log(`TCP server running on port ${tcpPort}`);
 });
