@@ -14,6 +14,12 @@ interface ChessBoardProps {
   joinGame: () => void;
   joinGameId: string;
   setJoinGameId: (id: string) => void;
+  whiteTime: number;
+  blackTime: number;
+  isWhite: boolean;
+  isBlack: boolean;
+  setIsWhite: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsBlack: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -23,6 +29,12 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   joinGame,
   joinGameId,
   setJoinGameId,
+  whiteTime,
+  blackTime,
+  isWhite,
+  isBlack,
+  setIsWhite,
+  setIsBlack,
 }) => {
   const [gameId, setGameId] = useState<string | null>(null);
   const [game, setGame] = useState(new Chess());

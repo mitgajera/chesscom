@@ -137,6 +137,9 @@ const App = () => {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
+  const [isWhite, setIsWhite] = useState<boolean>(false);
+  const [isBlack, setIsBlack] = useState<boolean>(false);
+
   return (
     <div className="app-container">
       <Header />
@@ -148,6 +151,9 @@ const App = () => {
       />
       <Timers whiteTime={whiteTime} blackTime={blackTime} formatTime={formatTime} />
       <ChessBoard
+        fen={fen}
+        onDrop={onDrop} 
+        playerColor={playerColor}
         whiteTime={whiteTime}
         blackTime={blackTime}
         isWhite={isWhite}
