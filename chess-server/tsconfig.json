@@ -6,10 +6,10 @@
     "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
-    "lib": ["ES6"], // Include only the necessary libraries
-    "types": ["node"], // Include only the necessary type definitions
-    "skipLibCheck": true // Skip type checking of declaration files
+    "lib": ["ES6"],
+    "types": ["node"],
+    "skipLibCheck": true
   },
-  "include": ["server.ts"],
+  "include": ["server.ts", "../chess-client/src/**/*"],
   "exclude": ["dist"]
 }

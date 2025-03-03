@@ -80,10 +80,10 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     const move = game.move({
       from: sourceSquare,
       to: targetSquare,
-      promotion: "q", // always promote to a queen for simplicity
+      promotion: "q", 
     });
 
-    if (move === null) return false;
+    if (move === null) return false;const [fen, setFen] = useState<string>(''); // Declare setFen here
 
     setFen(game.fen());
     if (gameId) {
@@ -105,7 +105,3 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 };
 
 export default ChessBoard;
-
-function setFen(arg0: string) {
-  throw new Error("Function not implemented.");
-}

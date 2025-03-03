@@ -12,14 +12,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new WebSocketServer(server, { cors: { origin: "*" } });
 
-const games: { [key: string]: { chess: Chess, players: string[] } } = {}; // Store ongoing games and players
+const games: { [key: string]: { chess: Chess, players: string[], spectators: string[] } } = {}; // Store ongoing games, players, and spectators
 
 io.on("connection", (socket) => {
   console.log("A player connected:", socket.id);
 
   socket.on("createGame", () => {
     const gameId = Math.random().toString(36).substr(2, 6);
-    games[gameId] = { chess: new Chess(), players: [socket.id] };
+    games[gameId] = { chess: new Chess(), players: [socket.id], spectators: [] };
     socket.join(gameId);
     socket.emit("gameCreated", gameId);
     console.log(`Game created with ID: ${gameId}`);
@@ -28,14 +28,17 @@ io.on("connection", (socket) => {
   socket.on("joinGame", (gameId) => {
     console.log(`Join game request for ID: ${gameId}`);
     if (games[gameId]) {
-      if (games[gameId].players.includes(socket.id)) {
-        socket.emit("error", "You cannot join the game you created.");
-        return;
+      if (games[gameId].players.length < 2) {
+        games[gameId].players.push(socket.id);
+        socket.join(gameId);
+        socket.emit("gameJoined", gameId);
+        console.log(`Player joined game with ID: ${gameId}`);
+      } else {
+        games[gameId].spectators.push(socket.id);
+        socket.join(gameId);
+        socket.emit("gameWatching", gameId);
+        console.log(`Spectator joined game with ID: ${gameId}`);
       }
-      games[gameId].players.push(socket.id);
-      socket.join(gameId);
-      socket.emit("gameJoined", gameId);
-      console.log(`Player joined game with ID: ${gameId}`);
     } else {
       console.log(`Game not found: ${gameId}`);
       socket.emit("error", "Game not found");
@@ -58,6 +61,7 @@ io.on("connection", (socket) => {
     for (const gameId in games) {
       const game = games[gameId];
       const playerIndex = game.players.indexOf(socket.id);
+      const spectatorIndex = game.spectators.indexOf(socket.id);
       if (playerIndex !== -1) {
         game.players.splice(playerIndex, 1);
         if (game.players.length === 1) {
@@ -70,6 +74,9 @@ io.on("connection", (socket) => {
           console.log(`Game ${gameId} ended. No players left.`);
         }
         break;
+      } else if (spectatorIndex !== -1) {
+        game.spectators.splice(spectatorIndex, 1);
+        console.log(`Spectator left game ${gameId}`);
       }
     }
   });
@@ -90,16 +97,17 @@ const tcpServer = net.createServer((socket) => {
 
     if (command === "createGame") {
       const newGameId = Math.random().toString(36).substr(2, 6);
-      games[newGameId] = { chess: new Chess(), players: [socket.id] };
+      games[newGameId] = { chess: new Chess(), players: [socket.id], spectators: [] };
       socket.write(`gameCreated ${newGameId}`);
     } else if (command === "joinGame") {
       if (games[gameId]) {
-        if (games[gameId].players.includes(socket.id)) {
-          socket.write("error You cannot join the game you created.");
-          return;
+        if (games[gameId].players.length < 2) {
+          games[gameId].players.push(socket.id);
+          socket.write(`gameJoined ${gameId}`);
+        } else {
+          games[gameId].spectators.push(socket.id);
+          socket.write(`gameWatching ${gameId}`);
         }
-        games[gameId].players.push(socket.id);
-        socket.write(`gameJoined ${gameId}`);
       } else {
         socket.write("error Game not found");
       }

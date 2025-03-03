@@ -1,0 +1,11 @@
+.timers {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.timer {
+  font-size: 18px;
+  font-weight: bold;
+}
