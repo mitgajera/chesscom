@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import "../styles/ChessBoard.css";
+import { ChessMove } from '../utils/chessUtils';
 
 const socket = io("http://localhost:3000");
 
@@ -104,4 +105,23 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   );
 };
 
-export default ChessBoard;
+interface MoveHistoryProps {
+  moves: ChessMove[];
+}
+
+const MoveHistory: React.FC<MoveHistoryProps> = ({ moves }) => {
+  return (
+    <div>
+      <h2>Move History</h2>
+      <ul>
+        {moves.map((move, index) => (
+          <li key={index}>
+            {move.notation}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default MoveHistory;

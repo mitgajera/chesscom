@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "start": "webpack serve --mode development",
+    "dev": "webpack serve --mode development",
     "build": "webpack --mode production"
   },
   "dependencies": {
@@ -34,6 +34,7 @@
     "cmdk": "^1.0.4",
     "dotenv": "^16.4.7",
     "embla-carousel": "^8.5.2",
+    "embla-carousel-react": "^8.5.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.477.0",
     "next-themes": "^0.4.4",

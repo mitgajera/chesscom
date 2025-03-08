@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
-import Board from '@/components/Board';
-import PlayerInfo from '@/components/PlayerInfo';
-import MoveHistory from '@/components/MoveHistory';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { GameState, getInitialGameState, ChessMove } from '@/utils/chessUtils';
+import Layout from '../components/Layout';
+import Board from '../components/Board';
+import PlayerInfo from '../components/PlayerInfo';
+import MoveHistory from '../components/MoveHistory';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Separator } from '../components/ui/separator';
+import { GameState, getInitialGameState, ChessMove } from '../utils/chessUtils';
 import { RotateCcw, RotateCw, Play, X, CircleDot } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '../components/ui/button';
+import { useToast } from '../components/ui/use-toast';
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());

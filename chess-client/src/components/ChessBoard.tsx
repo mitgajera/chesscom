@@ -10,51 +10,66 @@ interface ChessBoardProps {
   fen: string;
   onDrop: (sourceSquare: string, targetSquare: string) => boolean;
   playerColor: "white" | "black";
-  createGame: () => void;
-  joinGame: () => void;
-  joinGameId: string;
-  setJoinGameId: (id: string) => void;
   whiteTime: number;
   blackTime: number;
   isWhite: boolean;
   isBlack: boolean;
   setIsWhite: React.Dispatch<React.SetStateAction<boolean>>;
   setIsBlack: React.Dispatch<React.SetStateAction<boolean>>;
+  createGame: () => void;
+  joinGame: () => void;
+  joinGameId: string;
+  setJoinGameId: React.Dispatch<React.SetStateAction<string>>;
+  gameId: string;
+  gameStatus: string;
+  gameResult: string;
+  moveHistory: string[];
+  currentPlayer: string;
+  opponent: string;
+  timeLeft: { white: number; black: number };
+  onMove: (move: string) => void;
+  onGameOver: () => void;
 }
 
 const ChessBoard: React.FC<ChessBoardProps> = ({
   fen,
+  onDrop,
   playerColor,
-  createGame,
-  joinGame,
-  joinGameId,
-  setJoinGameId,
   whiteTime,
   blackTime,
   isWhite,
   isBlack,
   setIsWhite,
   setIsBlack,
+  createGame,
+  joinGame,
+  joinGameId,
+  setJoinGameId,
+  gameId,
+  gameStatus,
+  gameResult,
+  moveHistory,
+  currentPlayer,
+  opponent,
+  timeLeft,
+  onMove,
+  onGameOver,
 }) => {
-  const [gameId, setGameId] = useState<string | null>(null);
   const [game, setGame] = useState(new Chess());
   const [isSpectator, setIsSpectator] = useState<boolean>(false);
 
   useEffect(() => {
     socket.on("gameCreated", (id: string) => {
-      setGameId(id);
       setIsSpectator(false);
       alert(`Game created with ID: ${id}`);
     });
 
     socket.on("gameJoined", (id: string) => {
-      setGameId(id);
       setIsSpectator(false);
       alert(`Joined game with ID: ${id}`);
     });
 
     socket.on("gameWatching", (id: string) => {
-      setGameId(id);
       setIsSpectator(true);
       alert(`You are watching the game with ID: ${id}`);
     });
@@ -65,7 +80,6 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
     socket.on("gameOver", (message: string) => {
       alert(message);
-      setGameId(null);
       setGame(new Chess());
     });
 
@@ -83,27 +97,6 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     };
   }, []);
 
-  const onDrop = (sourceSquare: string, targetSquare: string) => {
-    if (isSpectator) {
-      alert("You are only watching the game and cannot make moves.");
-      return false;
-    }
-
-    const move = game.move({
-      from: sourceSquare,
-      to: targetSquare,
-      promotion: "q", // always promote to a queen for simplicity
-    });
-
-    if (move === null) return false;
-
-    setFen(game.fen());
-    if (gameId) {
-      socket.emit("move", { gameId, move: `${sourceSquare}${targetSquare}q` });
-    }
-    return true;
-  };
-
   return (
     <div className="board-container">
       <Chessboard
@@ -117,7 +110,3 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 };
 
 export default ChessBoard;
-
-function setFen(arg0: string) {
-  throw new Error("Function not implemented.");
-}

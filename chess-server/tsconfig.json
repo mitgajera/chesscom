@@ -3,13 +3,13 @@
     "target": "ES6",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "../chess-server",
     "strict": true,
     "esModuleInterop": true,
     "lib": ["ES6"],
     "types": ["node"],
     "skipLibCheck": true
   },
-  "include": ["server.ts", "../chess-client/src/**/*"],
+  "include": ["server.ts", "../chess-server/src/**/*"],
   "exclude": ["dist"]
 }

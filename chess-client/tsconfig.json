@@ -8,5 +8,5 @@
     "strict": true,
     "esModuleInterop": true
   },
-  "include": ["src"]
+  "include": ["src", "src/embla-carousel-react.d.ts"]
 }

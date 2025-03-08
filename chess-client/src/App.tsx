@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
-import { FormProvider } from "react-hook-form"; // Import FormProvider
 import Header from "./components/Header";
 import Controls from "./components/Controls";
 import Timers from "./components/Timers";
@@ -140,10 +139,51 @@ const App = () => {
   const [isWhite, setIsWhite] = useState<boolean>(false);
   const [isBlack, setIsBlack] = useState<boolean>(false);
 
+  const moveHistory = game.history();
+  const timeLeft = { white: whiteTime, black: blackTime };
+  const gameResult = game.isCheckmate() ? (currentPlayer === "white" ? "black" : "white") : "draw";
+  const gameStatus = game.isGameOver() ? "over" : "ongoing";
+
+  function onMove(move: string): void {
+    const [sourceSquare, targetSquare, promotion] = move.split("");
+    const moveObj = game.move({
+      from: sourceSquare + targetSquare,
+      to: promotion,
+      promotion: "q || r || b || n",
+    });
+
+    if (moveObj === null) {
+      alert("Invalid move");
+      return;
+    }
+
+    setFen(game.fen());
+    setCurrentPlayer(currentPlayer === "white" ? "black" : "white");
+
+    if (gameId) {
+      socket.emit("move", { gameId, move });
+    }
+  }
+
+  function onGameOver(): void {
+    alert("Game over!");
+    setGameId(null);
+    setGame(new Chess());
+    setFen(new Chess().fen());
+    setWhiteTime(300);
+    setBlackTime(300);
+    setCurrentPlayer("white");
+    clearInterval(timerRef.current!);
+  }
+
   return (
     <div className="app-container">
       <Header />
       <Controls
+        gameId={gameId || ""}
+        gameStatus={game.isGameOver() ? "over" : "ongoing"}
+        gameResult={game.isCheckmate() ? (currentPlayer === "white" ? "black" : "white") : "draw"}
+        moveHistory={game.history()}
         createGame={createGame}
         joinGame={joinGame}
         joinGameId={joinGameId}
@@ -151,20 +191,29 @@ const App = () => {
       />
       <Timers whiteTime={whiteTime} blackTime={blackTime} formatTime={formatTime} />
       <ChessBoard
-        fen={fen}
-        onDrop={onDrop} 
-        playerColor={playerColor}
-        whiteTime={whiteTime}
-        blackTime={blackTime}
-        isWhite={isWhite}
-        isBlack={isBlack}
-        setIsWhite={setIsWhite}
-        setIsBlack={setIsBlack}
-        createGame={createGame}
-        joinGame={joinGame}
-        joinGameId={joinGameId}
-        setJoinGameId={setJoinGameId}
-      />
+  fen={fen}
+  onDrop={onDrop}
+  playerColor={playerColor}
+  whiteTime={whiteTime}
+  blackTime={blackTime}
+  isWhite={isWhite}
+  isBlack={isBlack}
+  setIsWhite={setIsWhite}
+  setIsBlack={setIsBlack}
+  createGame={createGame}
+  joinGame={joinGame}
+  joinGameId={joinGameId}
+  setJoinGameId={setJoinGameId}
+  gameId={gameId || ""}
+  gameStatus={gameStatus}
+  gameResult={gameResult}
+  moveHistory={moveHistory}
+  currentPlayer={currentPlayer}   
+  opponent={currentPlayer === "white" ? "black" : "white"}
+  timeLeft={timeLeft}
+  onMove={onMove}
+  onGameOver={onGameOver}
+/>
     </div>
   );
 };

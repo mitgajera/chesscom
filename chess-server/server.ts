@@ -18,7 +18,7 @@ io.on("connection", (socket) => {
   console.log("A player connected:", socket.id);
 
   socket.on("createGame", () => {
-    const gameId = Math.random().toString(36).substr(2, 6);
+    const gameId = Math.random().toString(36).substring(2, 6);
     games[gameId] = { chess: new Chess(), players: [socket.id], spectators: [] };
     socket.join(gameId);
     socket.emit("gameCreated", gameId);
@@ -29,7 +29,7 @@ io.on("connection", (socket) => {
     console.log(`Join game request for ID: ${gameId}`);
     if (games[gameId]) {
       if (games[gameId].players.length < 2) {
-        games[gameId].players.push(socket.id);
+        games[gameId].players.push((socket as any).id);
         socket.join(gameId);
         socket.emit("gameJoined", gameId);
         console.log(`Player joined game with ID: ${gameId}`);
@@ -96,16 +96,16 @@ const tcpServer = net.createServer((socket) => {
     const [command, gameId, move] = message.split(" ");
 
     if (command === "createGame") {
-      const newGameId = Math.random().toString(36).substr(2, 6);
-      games[newGameId] = { chess: new Chess(), players: [socket.id], spectators: [] };
+      const newGameId = Math.random().toString(36).substring(2, 6);
+      games[newGameId] = { chess: new Chess(), players: [(socket as any).id], spectators: [] };
       socket.write(`gameCreated ${newGameId}`);
     } else if (command === "joinGame") {
       if (games[gameId]) {
         if (games[gameId].players.length < 2) {
-          games[gameId].players.push(socket.id);
+          games[gameId].players.push((socket as any).id);
           socket.write(`gameJoined ${gameId}`);
         } else {
-          games[gameId].spectators.push(socket.id);
+          games[gameId].spectators.push((socket as any).id);
           socket.write(`gameWatching ${gameId}`);
         }
       } else {
