@@ -191,29 +191,31 @@ const App = () => {
       />
       <Timers whiteTime={whiteTime} blackTime={blackTime} formatTime={formatTime} />
       <ChessBoard
-  fen={fen}
-  onDrop={onDrop}
-  playerColor={playerColor}
-  whiteTime={whiteTime}
-  blackTime={blackTime}
-  isWhite={isWhite}
-  isBlack={isBlack}
-  setIsWhite={setIsWhite}
-  setIsBlack={setIsBlack}
-  createGame={createGame}
-  joinGame={joinGame}
-  joinGameId={joinGameId}
-  setJoinGameId={setJoinGameId}
-  gameId={gameId || ""}
-  gameStatus={gameStatus}
-  gameResult={gameResult}
-  moveHistory={moveHistory}
-  currentPlayer={currentPlayer}   
-  opponent={currentPlayer === "white" ? "black" : "white"}
-  timeLeft={timeLeft}
-  onMove={onMove}
-  onGameOver={onGameOver}
-/>
+      fen={fen}
+      onDrop={onDrop}
+      playerColor={playerColor}
+      whiteTime={whiteTime}
+      blackTime={blackTime}
+      isWhite={isWhite}
+      isBlack={isBlack}
+      setIsWhite={setIsWhite}
+      setIsBlack={setIsBlack}
+      createGame={createGame}
+      joinGame={joinGame}
+      joinGameId={joinGameId}
+      setJoinGameId={setJoinGameId}
+      gameId={gameId || ""}
+      gameStatus={gameStatus}
+      gameResult={gameResult}
+      moveHistory={moveHistory}
+      currentPlayer={currentPlayer}   
+      opponent={currentPlayer === "white" ? "black" : "white"}
+      timeLeft={timeLeft}
+      onMove={onMove}
+      onGameOver={onGameOver}
+      isSpectator={isSpectator}
+      setIsSpectator={setIsSpectator}
+      />
     </div>
   );
 };

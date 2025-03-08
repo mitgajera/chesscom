@@ -14,8 +14,10 @@ interface ChessBoardProps {
   blackTime: number;
   isWhite: boolean;
   isBlack: boolean;
+  isSpectator: boolean;
   setIsWhite: React.Dispatch<React.SetStateAction<boolean>>;
   setIsBlack: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsSpectator: React.Dispatch<React.SetStateAction<boolean>>;
   createGame: () => void;
   joinGame: () => void;
   joinGameId: string;
@@ -39,6 +41,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   blackTime,
   isWhite,
   isBlack,
+  isSpectator,
   setIsWhite,
   setIsBlack,
   createGame,
@@ -54,9 +57,9 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   timeLeft,
   onMove,
   onGameOver,
+  setIsSpectator,
 }) => {
   const [game, setGame] = useState(new Chess());
-  const [isSpectator, setIsSpectator] = useState<boolean>(false);
 
   useEffect(() => {
     socket.on("gameCreated", (id: string) => {
