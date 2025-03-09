@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import { Sheet, SheetContent } from "../ui/sheet";
-import { Skeleton } from "../ui/skeleton";
+import Skeleton from "../ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -135,7 +135,7 @@ const SidebarProvider = React.forwardRef<
               "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
               className
             )}
-            ref={ref as React.Ref<HTMLDivElement>}
+            ref={ref as React.RefObject<HTMLDivElement>}
             {...props}
           >
             {children}
@@ -149,7 +149,7 @@ SidebarProvider.displayName = "SidebarProvider";
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & {
+  React.HTMLAttributes<HTMLDivElement> & {
     side?: "left" | "right";
     variant?: "sidebar" | "floating" | "inset";
     collapsible?: "offcanvas" | "icon" | "none";
@@ -420,7 +420,7 @@ SidebarGroup.displayName = "SidebarGroup";
 const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & { asChild?: boolean }
->(({ className, asChild = false, ...props }, ref: React.Ref<HTMLDivElement> | null) => {
+>(({ className, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -702,15 +702,14 @@ const SidebarMenuSubButton = React.forwardRef<
 
   return (
     <Comp
-      ref={ref}
+      ref={ref as React.Ref<HTMLAnchorElement>}
       data-sidebar="menu-sub-button"
       data-size={size}
       data-active={isActive}
       className={cn(
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
         "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-        size === "sm" && "text-xs",
-        size === "md" && "text-sm",
+        size === "sm" ? "text-xs" : "text-sm",
         "group-data-[collapsible=icon]:hidden",
         className
       )}
@@ -721,8 +720,9 @@ const SidebarMenuSubButton = React.forwardRef<
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
 const SidebarButton = React.forwardRef<HTMLButtonElement, any>((props, ref) => (
-  <button ref={ref as React.RefObject<HTMLButtonElement>} {...props} />
+  <button ref={ref as React.Ref<HTMLButtonElement>} {...props} />
 ));
+SidebarButton.displayName = "SidebarButton";
 
 export {
   Sidebar,

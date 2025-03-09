@@ -8,7 +8,7 @@ import { Separator } from '../components/ui/separator';
 import { GameState, getInitialGameState, ChessMove } from '../utils/chessUtils';
 import { RotateCcw, RotateCw, Play, X, CircleDot } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '../hooks/use-toast';
 
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>(getInitialGameState());
@@ -17,8 +17,7 @@ const Index = () => {
 
   // Function to handle square click
   const handleSquareClick = (square: string) => {
-    // This is just a placeholder for demonstration
-    // In a real app, you would implement game logic here
+  
     if (gameState.status === 'not_started') {
       toast({
         title: "Game not started",

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Player, ChessPiece, formatTime } from '@/utils/chessUtils';
+import { Player, ChessPiece, formatTime } from '../utils/chessUtils';
 
 interface PlayerInfoProps {
   player: Player;
