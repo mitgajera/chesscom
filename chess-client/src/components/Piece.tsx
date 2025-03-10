@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChessPiece } from '@/utils/chessUtils';
+import { ChessPiece } from '../utils/chessUtils';
 
 interface PieceProps {
   piece: ChessPiece;

@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from 'react';
-import { useEntranceAnimation } from '@/utils/animations';
+import { useEntranceAnimation } from '../utils/animations';
 
 interface LayoutProps {
   children: ReactNode;

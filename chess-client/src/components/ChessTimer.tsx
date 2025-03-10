@@ -1,11 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { PieceColor, formatTime } from '@/utils/chessUtils';
+import { PieceColor, formatTime } from '../utils/chessUtils';
 
 interface ChessTimerProps {
   initialTime: number; // in seconds
-  currentTurn: PieceColor;
-  color: PieceColor;
+  currentTurn: typeof PieceColor;
+  color: typeof PieceColor;
   isGameActive: boolean;
   onTimeUp: () => void;
 }

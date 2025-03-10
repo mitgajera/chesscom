@@ -420,7 +420,7 @@ SidebarGroup.displayName = "SidebarGroup";
 const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & { asChild?: boolean }
->(({ className, asChild = false, ...props }, ref) => {
+>(({ className, asChild = false, ...props }, ref: any) => {
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -441,7 +441,7 @@ SidebarGroupLabel.displayName = "SidebarGroupLabel";
 const SidebarGroupAction = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & { asChild?: boolean }
->(({ className, asChild = false, ...props }, ref: React.Ref<HTMLButtonElement> | null) => {
+>(({ className, asChild = false, ...props }, ref: any) => {
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -539,14 +539,14 @@ const SidebarMenuButton = React.forwardRef<
       className,
       ...props
     },
-    ref
+    ref: any
   ) => {
     const Comp = asChild ? Slot : "button";
     const { isMobile, state } = useSidebar();
 
     const button = (
       <Comp
-        ref={ref as React.Ref<HTMLButtonElement>}
+        ref={(ref as React.Ref<HTMLButtonElement>) || ref}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
@@ -586,7 +586,7 @@ const SidebarMenuAction = React.forwardRef<
     asChild?: boolean;
     showOnHover?: boolean;
   }
->(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
+>(({ className, asChild = false, showOnHover = false, ...props }, ref: any) => {
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -648,12 +648,11 @@ const SidebarMenuSkeleton = React.forwardRef<
       {...props}
     >
       {showIcon && (
-        <Skeleton
-          className="size-4 rounded-md"
-          data-sidebar="menu-skeleton-icon"
-        />
+        <div className="size-4 rounded-md" data-sidebar="menu-skeleton-icon">
+          <Skeleton />
+        </div>
       )}
-      <Skeleton
+      <div
         className="h-4 flex-1 max-w-[--skeleton-width]"
         data-sidebar="menu-skeleton-text"
         style={
@@ -661,7 +660,9 @@ const SidebarMenuSkeleton = React.forwardRef<
             "--skeleton-width": width,
           } as React.CSSProperties
         }
-      />
+      >
+        <Skeleton />
+      </div>
     </div>
   );
 });
@@ -697,12 +698,12 @@ const SidebarMenuSubButton = React.forwardRef<
     size?: "sm" | "md";
     isActive?: boolean;
   }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
+>(({ asChild = false, size = "md", isActive, className, ...props }, ref: any) => {
   const Comp = asChild ? Slot : "a";
 
   return (
     <Comp
-      ref={ref as React.Ref<HTMLAnchorElement>}
+      ref={ref} 
       data-sidebar="menu-sub-button"
       data-size={size}
       data-active={isActive}

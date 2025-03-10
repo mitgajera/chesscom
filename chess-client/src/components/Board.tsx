@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import Piece from './Piece';
-import { ChessPiece, FILES, RANKS, isLightSquare, GameState } from '@/utils/chessUtils';
+import { ChessPiece, FILES, RANKS, isLightSquare, GameState } from '../utils/chessUtils';
 
 interface BoardProps {
   gameState: GameState;

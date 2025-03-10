@@ -2,8 +2,8 @@
 import React from 'react';
 import PlayerInfo from './PlayerInfo';
 import MoveHistory from './MoveHistory';
-import { GameState } from '@/utils/chessUtils';
-import { Button } from '@/components/ui/button';
+import { GameState } from '../utils/chessUtils';
+import { Button } from '../components/ui/button';
 import { 
   RotateCcw, Play, Pause, SkipForward, Clock, Trophy
 } from 'lucide-react';
