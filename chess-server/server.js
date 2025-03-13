@@ -1,44 +1,78 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var express = require("express");
-var http = require("http");
-var socket_io_1 = require("socket.io");
-var chess_js_1 = require("chess.js");
-var app = express();
-var server = http.createServer(app);
-var io = new socket_io_1.Server(server, { cors: { origin: "*" } });
-var games = {}; // Store ongoing games
-io.on("connection", function (socket) {
-    console.log("A player connected:", socket.id);
-    socket.on("createGame", function () {
-        var gameId = Math.random().toString(36).substr(2, 6);
-        games[gameId] = new chess_js_1.Chess();
-        socket.join(gameId);
-        socket.emit("gameCreated", gameId);
-    });
-    socket.on("joinGame", function (gameId) {
-        if (games[gameId]) {
-            socket.join(gameId);
-            socket.emit("gameJoined", gameId);
-        }
-        else {
-            socket.emit("error", "Game not found");
-        }
-    });
-    socket.on("move", function (_a) {
-        var gameId = _a.gameId, move = _a.move;
-        var game = games[gameId];
-        if (game && game.move(move)) {
-            io.to(gameId).emit("updateBoard", game.fen()); // Send updated game state
-        }
-        else {
-            socket.emit("error", "Invalid move");
-        }
-    });
-    socket.on("disconnect", function () {
-        console.log("A player disconnected:", socket.id);
-    });
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static(path.join(__dirname, 'dist')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
-server.listen(3000, function () {
-    console.log("Server running on port 3000");
+
+const games = {}; // Store ongoing games
+
+io.on('connection', (socket) => {
+  console.log('a user connected:', socket.id);
+
+  socket.on('createGame', () => {
+    const gameId = generateGameId();
+    games[gameId] = { players: [socket.id], spectators: [] };
+    socket.join(gameId);
+    socket.emit('gameCreated', { gameId }); // Emit the game ID to the client
+    console.log(`Game created with ID: ${gameId}`);
+  });
+
+  socket.on('joinGame', (data) => {
+    const { gameId } = data;
+    if (games[gameId]) {
+      if (games[gameId].players.length < 2) {
+        games[gameId].players.push(socket.id);
+        socket.join(gameId);
+        socket.emit('gameJoined', { gameId, color: 'black' });
+        io.to(gameId).emit('startGame', { gameId });
+        console.log(`User joined game with ID: ${gameId}`);
+      } else {
+        games[gameId].spectators.push(socket.id);
+        socket.join(gameId);
+        socket.emit('spectatorJoined', { gameId });
+        console.log(`Spectator joined game with ID: ${gameId}`);
+      }
+    } else {
+      socket.emit('error', { message: 'Game not found' });
+    }
+  });
+
+  socket.on('move', (data) => {
+    const { gameId, fen, isWhiteTurn } = data;
+    socket.to(gameId).emit('move', { fen, isWhiteTurn });
+    console.log(`Move made in game ${gameId}: ${fen}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected:', socket.id);
+    for (const gameId in games) {
+      const game = games[gameId];
+      game.players = game.players.filter((id) => id !== socket.id);
+      game.spectators = game.spectators.filter((id) => id !== socket.id);
+      if (game.players.length === 0 && game.spectators.length === 0) {
+        delete games[gameId];
+      }
+    }
+  });
+});
+
+function generateGameId() {
+  return Math.random().toString(36).substring(2, 9);
+}
+
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

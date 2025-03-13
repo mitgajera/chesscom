@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
-import { Chessboard } from "react-chessboard";
+import Chessboard from "chessboardjsx";
 import { Chess } from "chess.js";
 import "../styles/ChessBoard.css";
 
-const socket = io("http://localhost:3000");
+const socket = io("http://localhost:3001");
 
 interface ChessBoardProps {
   fen: string;
@@ -104,9 +104,9 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
     <div className="board-container">
       <Chessboard
         position={fen}
-        onPieceDrop={onDrop}
-        boardOrientation={playerColor}
-        boardWidth={500}
+        onDrop={({ sourceSquare, targetSquare }: { sourceSquare: string; targetSquare: string }) => onDrop(sourceSquare, targetSquare)}
+        orientation={playerColor}
+        draggable={true}
       />
     </div>
   );

@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "es5",
     "module": "commonjs",
     "jsx": "react",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "src/embla-carousel-react.d.ts"]
+  "include": ["src"]
 }

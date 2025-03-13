@@ -27,11 +27,15 @@ const Controls: React.FC<ControlsProps> = ({
       <button onClick={createGame}>Create Game</button>
       <input
         type="text"
-        placeholder="Enter Game ID"
         value={joinGameId}
         onChange={(e) => setJoinGameId(e.target.value)}
+        placeholder="Enter Game ID"
       />
       <button onClick={joinGame}>Join Game</button>
+      {gameId && <p>Game ID: {gameId}</p>}
+      <p>Game Status: {gameStatus}</p>
+      <p>Game Result: {gameResult}</p>
+      <p>Move History: {moveHistory.join(", ")}</p>
     </div>
   );
 };

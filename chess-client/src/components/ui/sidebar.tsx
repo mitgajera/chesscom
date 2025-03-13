@@ -725,6 +725,8 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, any>((props, ref) => (
 ));
 SidebarButton.displayName = "SidebarButton";
 
+export default Sidebar;
+
 export {
   Sidebar,
   SidebarContent,

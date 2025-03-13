@@ -1,0 +1,84 @@
+.game-information {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  width: 300px;
+}
+
+.game-information h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.player-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.player-color.black {
+  background-color: #000;
+}
+
+.player-color.white {
+  background-color: #fff;
+  border: 1px solid #000;
+}
+
+.player-time {
+  font-size: 14px;
+}
+
+.game-status {
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.move-history {
+  font-size: 14px;
+  color: #666;
+}
+
+.move-history h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.move-history-table-container {
+  max-height: 340px; /* Adjust the height as needed */
+  overflow-y: auto;
+}
+
+.move-history table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.move-history th,
+.move-history td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.move-history th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
