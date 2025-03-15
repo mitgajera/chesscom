@@ -1,4 +1,6 @@
-// Keep just this file as src/index.tsx
+
+// @ts-nocheck
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
@@ -9,10 +11,14 @@ const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </React.StrictMode>
+    React.createElement(
+      React.StrictMode,
+      null,
+      React.createElement(
+        ErrorBoundary,
+        null,
+        React.createElement(App, null)
+      )
+    )
   );
 }

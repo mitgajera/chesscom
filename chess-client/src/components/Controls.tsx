@@ -1,8 +1,9 @@
 import React from "react";
 import "../styles/Controls.css";
+import { Move } from 'chess.js';
 
-interface ControlsProps {
-  gameId: string | null;
+type ControlsProps = {
+  gameId: string;
   gameStatus: string;
   gameResult: string;
   moveHistory: string[];
@@ -10,7 +11,9 @@ interface ControlsProps {
   joinGame: () => void;
   joinGameId: string;
   setJoinGameId: React.Dispatch<React.SetStateAction<string>>;
-}
+  resignGame: () => void;
+  offerDraw: () => void;
+};
 
 const Controls: React.FC<ControlsProps> = ({
   gameId,
@@ -21,6 +24,8 @@ const Controls: React.FC<ControlsProps> = ({
   joinGame,
   joinGameId,
   setJoinGameId,
+  resignGame,
+  offerDraw,
 }) => {
   return (
     <div className="controls">
@@ -32,10 +37,8 @@ const Controls: React.FC<ControlsProps> = ({
         placeholder="Enter Game ID"
       />
       <button onClick={joinGame}>Join Game</button>
-      {gameId && <p>Game ID: {gameId}</p>}
-      <p>Game Status: {gameStatus}</p>
-      <p>Game Result: {gameResult}</p>
-      <p>Move History: {moveHistory.join(", ")}</p>
+      <button onClick={resignGame}>Resign</button>
+      <button onClick={offerDraw}>Offer Draw</button>
     </div>
   );
 };

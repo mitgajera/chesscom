@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import Chessboard from "chessboardjsx";
-import { Chess } from "chess.js";
+import { Chess } from 'chess.js';  // Import Chess as named export
 import "../styles/ChessBoard.css";
 
 const socket = io("http://localhost:3001");
@@ -44,6 +44,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   isSpectator,
   setIsWhite,
   setIsBlack,
+  setIsSpectator,
   createGame,
   joinGame,
   joinGameId,
@@ -57,7 +58,6 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   timeLeft,
   onMove,
   onGameOver,
-  setIsSpectator,
 }) => {
   const [game, setGame] = useState(new Chess());
 
@@ -106,7 +106,10 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
         position={fen}
         onDrop={({ sourceSquare, targetSquare }: { sourceSquare: string; targetSquare: string }) => onDrop(sourceSquare, targetSquare)}
         orientation={playerColor}
-        draggable={true}
+        draggable={
+          !isSpectator && 
+          ((isWhite && game.turn() === 'w') || (isBlack && game.turn() === 'b'))
+        }
       />
     </div>
   );

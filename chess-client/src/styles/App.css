@@ -49,6 +49,23 @@ body {
   background-color: #0056b3;
 }
 
+.chessboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-information {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #fff;
+}
+
 header {
   background-color: #fff;
   border-bottom: 1px solid #ddd;

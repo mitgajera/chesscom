@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/GameInformation.css";
+import { Move } from 'chess.js';
 
 interface GameInformationProps {
   blackPlayerTime: string;
@@ -14,6 +15,13 @@ const GameInformation: React.FC<GameInformationProps> = ({
   gameStatus,
   moveHistory,
 }) => {
+  const formatMove = (move: any) => {
+    const piece = move.piece.toUpperCase();
+    const from = move.from;
+    const to = move.to;
+    return `${piece}${from}-${to}`;
+  };
+
   return (
     <div className="game-information">
       <h2>Game Information</h2>
