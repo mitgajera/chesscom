@@ -2,8 +2,6 @@
 
 A real-time online chess application built with React, TypeScript, and Socket.IO that allows players to compete in chess matches over the internet.
 
-![Chess Game](chess-game-screenshot.png)
-
 ## Features
 
 - ♟️ Create and join games with unique game IDs
