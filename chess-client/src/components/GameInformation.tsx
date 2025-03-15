@@ -1,6 +1,5 @@
 import React from "react";
 import "../styles/GameInformation.css";
-import { Move } from 'chess.js';
 
 interface GameInformationProps {
   blackPlayerTime: string;
@@ -15,13 +14,6 @@ const GameInformation: React.FC<GameInformationProps> = ({
   gameStatus,
   moveHistory,
 }) => {
-  const formatMove = (move: any) => {
-    const piece = move.piece.toUpperCase();
-    const from = move.from;
-    const to = move.to;
-    return `${piece}${from}-${to}`;
-  };
-
   return (
     <div className="game-information">
       <h2>Game Information</h2>
@@ -38,7 +30,7 @@ const GameInformation: React.FC<GameInformationProps> = ({
         </div>
       </div>
       <div className="game-status">
-        <p>{gameStatus}</p>
+        <p>{gameStatus === "ongoing" ? "Game in progress" : "Game over"}</p>
       </div>
       <div className="move-history">
         <h3>Move History</h3>
@@ -53,13 +45,15 @@ const GameInformation: React.FC<GameInformationProps> = ({
             </thead>
             <tbody>
               {moveHistory.length > 0 ? (
-                moveHistory.map((move, index) => (
-                  <tr key={index}>
-                    <td>{Math.ceil((index + 1) / 2)}</td>
-                    <td>{index % 2 === 0 ? move : ""}</td>
-                    <td>{index % 2 !== 0 ? move : ""}</td>
-                  </tr>
-                ))
+                Array(Math.ceil(moveHistory.length / 2))
+                  .fill(0)
+                  .map((_, i) => (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>{moveHistory[i * 2] || ""}</td>
+                      <td>{moveHistory[i * 2 + 1] || ""}</td>
+                    </tr>
+                  ))
               ) : (
                 <tr>
                   <td colSpan={3}>No moves yet. The game hasn't started.</td>

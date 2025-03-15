@@ -110,6 +110,13 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
           !isSpectator && 
           ((isWhite && game.turn() === 'w') || (isBlack && game.turn() === 'b'))
         }
+        width={500}
+        boardStyle={{
+          borderRadius: "5px",
+          boxShadow: "0 5px 15px rgba(0, 0, 0, 0.5)"
+        }}
+        lightSquareStyle={{ backgroundColor: "#f0d9b5" }}
+        darkSquareStyle={{ backgroundColor: "#b58863" }}
       />
     </div>
   );
