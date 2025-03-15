@@ -34,8 +34,8 @@ A real-time online chess application built with React, TypeScript, and Socket.IO
 
 1. **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/multiplayer-chess.git
-    cd multiplayer-chess
+    git clone https://github.com/mitgajera/chesscom
+    cd chesscom
     ```
 
 2. **Install dependencies**
