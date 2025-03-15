@@ -1,44 +1,53 @@
-import React from "react";
-import "../styles/Controls.css";
-import { Move } from 'chess.js';
+import React from 'react';
+import '../styles/Controls.css';
 
-type ControlsProps = {
-  gameId: string;
-  gameStatus: string;
-  gameResult: string;
-  moveHistory: string[];
+interface ControlsProps {
+  isWhite: boolean;
+  isBlack: boolean;
+  isSpectator: boolean;
   createGame: () => void;
   joinGame: () => void;
   joinGameId: string;
   setJoinGameId: React.Dispatch<React.SetStateAction<string>>;
-  resignGame: () => void;
-  offerDraw: () => void;
-};
+}
 
 const Controls: React.FC<ControlsProps> = ({
-  gameId,
-  gameStatus,
-  gameResult,
-  moveHistory,
+  isWhite,
+  isBlack,
+  isSpectator,
   createGame,
   joinGame,
   joinGameId,
-  setJoinGameId,
-  resignGame,
-  offerDraw,
+  setJoinGameId
 }) => {
   return (
-    <div className="controls">
-      <button onClick={createGame}>Create Game</button>
-      <input
-        type="text"
-        value={joinGameId}
-        onChange={(e) => setJoinGameId(e.target.value)}
-        placeholder="Enter Game ID"
-      />
-      <button onClick={joinGame}>Join Game</button>
-      <button onClick={resignGame}>Resign</button>
-      <button onClick={offerDraw}>Offer Draw</button>
+    <div className="controls-container horizontal">
+      <div className="control-buttons">
+        <button 
+          onClick={createGame}
+          className="control-button create-game"
+          disabled={isWhite || isBlack || isSpectator}
+        >
+          Create Game
+        </button>
+        
+        <div className="join-game-controls">
+          <input
+            type="text"
+            placeholder="Enter Game ID"
+            value={joinGameId}
+            onChange={(e) => setJoinGameId(e.target.value)}
+            className="game-id-input"
+          />
+          <button 
+            onClick={joinGame}
+            className="control-button join-game"
+            disabled={isWhite || isBlack || isSpectator}
+          >
+            Join Game
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

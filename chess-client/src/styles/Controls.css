@@ -1,26 +1,64 @@
-.controls {
+.controls-container {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  align-items: center;
+  margin: 15px 0;
+  padding: 10px;
 }
 
-.controls input {
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+.control-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  max-width: 600px;
 }
 
-.controls button {
-  padding: 10px 20px;
+.control-button {
+  padding: 10px 15px;
   border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: #fff;
+  border-radius: 4px;
+  font-size: 16px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
-.controls button:hover {
-  background-color: #0056b3;
+.create-game {
+  background-color: #4caf50;
+  color: white;
+}
+
+.create-game:hover {
+  background-color: #45a049;
+}
+
+.join-game-controls {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.game-id-input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  flex-grow: 1;
+  max-width: 200px;
+}
+
+.join-game {
+  background-color: #2196f3;
+  color: white;
+}
+
+.join-game:hover {
+  background-color: #0b7dda;
+}
+
+.control-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
