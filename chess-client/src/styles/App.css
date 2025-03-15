@@ -17,9 +17,8 @@ body {
 
 .game-container {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-start; /* Align items at the top */
   justify-content: center;
-  gap: 20px;
   margin-top: 20px;
 }
 
@@ -53,6 +52,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 500px;
+  height: 500px;
 }
 
 .game-information {

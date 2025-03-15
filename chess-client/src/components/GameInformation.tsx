@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/GameInformation.css";
+import "../styles/GameInformation.css"; // Update this path to match your project structure
 
 interface GameInformationProps {
   blackPlayerTime: string;
@@ -19,18 +19,22 @@ const GameInformation: React.FC<GameInformationProps> = ({
       <h2>Game Information</h2>
       <div className="player-info">
         <div className="player">
-          <span className="player-color black"></span>
-          <span>Black Player</span>
+          <div>
+            <span className="player-color black"></span>
+            <span>Black</span>
+          </div>
           <span className="player-time">{blackPlayerTime}</span>
         </div>
         <div className="player">
-          <span className="player-color white"></span>
-          <span>White Player</span>
+          <div>
+            <span className="player-color white"></span>
+            <span>White</span>
+          </div>
           <span className="player-time">{whitePlayerTime}</span>
         </div>
       </div>
       <div className="game-status">
-        <p>{gameStatus === "ongoing" ? "Game in progress" : "Game over"}</p>
+        <p style={{ margin: 0 }}>{gameStatus === "ongoing" ? "Game in progress" : "Game over"}</p>
       </div>
       <div className="move-history">
         <h3>Move History</h3>
@@ -56,7 +60,7 @@ const GameInformation: React.FC<GameInformationProps> = ({
                   ))
               ) : (
                 <tr>
-                  <td colSpan={3}>No moves yet. The game hasn't started.</td>
+                  <td colSpan={3}>No moves yet</td>
                 </tr>
               )}
             </tbody>

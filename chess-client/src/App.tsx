@@ -457,7 +457,7 @@ const App = () => {
               onDrop={onDrop}
               playerColor={playerColor}
               isSpectator={isSpectator}
-              gameId={gameId || ""}
+              gameId={gameId || ""} // Pass the gameId here
             />
           </div>
           <GameInformation

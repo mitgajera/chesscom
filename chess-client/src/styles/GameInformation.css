@@ -1,84 +1,132 @@
 .game-information {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
   width: 300px;
+  height: 500px; /* Match the height of the chessboard */
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-left: 20px;
+  overflow: hidden; /* Hide overflow for the container itself */
 }
 
 .game-information h2 {
-  font-size: 18px;
-  margin-bottom: 16px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 .player-info {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .player {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  justify-content: space-between;
+  padding: 8px;
+  background-color: white;
+  border-radius: 4px;
 }
 
 .player-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
   display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   margin-right: 8px;
 }
 
-.player-color.black {
-  background-color: #000;
+.player-color.white {
+  background-color: white;
+  border: 1px solid #ccc;
 }
 
-.player-color.white {
-  background-color: #fff;
-  border: 1px solid #000;
+.player-color.black {
+  background-color: #333;
 }
 
 .player-time {
-  font-size: 14px;
-}
-
-.game-status {
-  margin-bottom: 16px;
-  text-align: center;
   font-weight: bold;
 }
 
+.game-status {
+  padding: 8px;
+  background-color: white;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 .move-history {
-  font-size: 14px;
-  color: #666;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Take up remaining space */
+  min-height: 0; /* Important for flex child to respect parent's height */
 }
 
 .move-history h3 {
-  font-size: 16px;
-  margin-bottom: 8px;
+  margin-top: 0;
+  margin-bottom: 10px;
 }
 
 .move-history-table-container {
-  max-height: 340px; /* Adjust the height as needed */
-  overflow-y: auto;
+  flex: 1;
+  overflow-y: auto; /* Enable vertical scrolling */
+  background-color: white;
+  border-radius: 4px;
+  max-height: 270px; /* Set a maximum height to ensure scrolling works */
 }
 
-.move-history table {
+/* Add a visible scrollbar for better UX */
+.move-history-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.move-history-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.move-history-table-container::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 4px;
+}
+
+.move-history-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.move-history-table-container table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.move-history th,
-.move-history td {
-  border: 1px solid #ddd;
+.move-history-table-container th,
+.move-history-table-container td {
   padding: 8px;
+  border-bottom: 1px solid #eee;
   text-align: center;
 }
 
-.move-history th {
+.move-history-table-container th {
   background-color: #f9f9f9;
-  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 2px 2px -2px rgba(0,0,0,0.2);
+}
+
+/* Ensure the last row doesn't have a bottom border */
+.move-history-table-container tr:last-child td {
+  border-bottom: none;
+}
+
+/* Hover effect for table rows to improve readability */
+.move-history-table-container tbody tr:hover {
+  background-color: #f5f9ff;
 }

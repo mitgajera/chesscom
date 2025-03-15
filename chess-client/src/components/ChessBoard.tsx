@@ -102,6 +102,31 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
 
   return (
     <div className="board-container">
+      {/* Game ID display */}
+      {gameId && (
+        <div className="game-id-display">
+          Game ID: <span className="game-id">{gameId}</span>
+          <button 
+            className="copy-button" 
+            onClick={() => {
+              navigator.clipboard.writeText(gameId);
+              // Optional: show a small tooltip or notification that ID was copied
+              const button = document.querySelector('.copy-button');
+              if (button) {
+                const originalText = button.textContent;
+                button.textContent = "Copied!";
+                setTimeout(() => {
+                  button.textContent = originalText;
+                }, 2000);
+              }
+            }}
+            title="Copy Game ID"
+          >
+            Copy
+          </button>
+        </div>
+      )}
+
       <Chessboard
         position={fen}
         onDrop={({ sourceSquare, targetSquare }: { sourceSquare: string; targetSquare: string }) => onDrop(sourceSquare, targetSquare)}
