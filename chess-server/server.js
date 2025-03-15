@@ -121,7 +121,7 @@ io.on('connection', (socket) => {
   });
 
   // Handle move events
-  socket.on('move', ({ gameId, move, fen, isWhiteTurn, whiteTime, blackTime }) => {
+  socket.on('move', ({ gameId, move, fen, isWhiteTurn, whiteTime, blackTime, fromPlayerId }) => {
     if (!games[gameId]) return;
     
     const game = games[gameId];
@@ -134,13 +134,14 @@ io.on('connection', (socket) => {
       game.moveHistory.push(move);
     }
     
-    // Broadcast the move to all clients in the game room
+    // Broadcast the move to all clients in the game room including who made the move
     io.to(gameId).emit('move', { 
       fen, 
       move, 
       isWhiteTurn, 
       whiteTime, 
-      blackTime 
+      blackTime,
+      fromPlayerId // Pass the ID of who made the move
     });
     
     // Check if the game is over after this move

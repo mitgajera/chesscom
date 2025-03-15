@@ -32,6 +32,8 @@ const App = () => {
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const chessBoardRef = useRef<HTMLDivElement>(null);
+  const [lastMoveByMe, setLastMoveByMe] = useState<string | null>(null);
+  const [isHandlingMyMove, setIsHandlingMyMove] = useState<boolean>(false);
   
   useEffect(() => {
     console.log("App component mounted");
@@ -117,7 +119,7 @@ const App = () => {
       });
     });
 
-    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime }) => {
+    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime, fromSocketId }) => {
       // Update local chess instance with the new FEN
       chess.load(fen);
       setFen(fen);
@@ -134,9 +136,8 @@ const App = () => {
         setMoveHistory(prev => [...prev, move]);
       }
       
-      // Small notification for opponent's move
-      if ((playerColor === "white" && !isWhiteTurn) || 
-          (playerColor === "black" && isWhiteTurn)) {
+      // Only show notification for opponent moves
+      if (fromSocketId !== socket.id) {
         toast.info(`Opponent moved: ${move?.san || ""}`, {
           position: "bottom-right",
           autoClose: 1500
@@ -300,35 +301,44 @@ const App = () => {
       return false;
     }
   
-    // Try to make the move - wrap this in a try/catch to handle any errors
+    // Try to make the move
     try {
-      // Check if move is legal without actually making it
-      const possibleMoves = chess.moves({ verbose: true });
-      const moveIsLegal = possibleMoves.some(
-        move => move.from === sourceSquare && move.to === targetSquare
-      );
+      // Make the move
+      const move = chess.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: "q" // Always promote to queen for simplicity
+      });
   
-      if (!moveIsLegal) {
+      // If invalid move
+      if (!move) {
         toast.error("Invalid move!", {
           position: "bottom-right",
           autoClose: 3000
         });
         return false;
       }
-  
-      // Now actually make the move
-      const move = chess.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: "q"
-      });
-  
+      
+      // Set flag to indicate we're handling our own move
+      setIsHandlingMyMove(true);
+      
+      // Update UI states
       setFen(chess.fen());
       
-      // After making a move, update the current player
-      const newCurrentPlayer = currentTurn === "white" ? "black" : "white";
+      // Get the new turn after the move
+      const newCurrentPlayer = chess.turn() === "w" ? "white" : "black";
       setCurrentPlayer(newCurrentPlayer);
       
+      // Add to move history
+      setMoveHistory(prev => [...prev, move]);
+      
+      // Show notification for the player's own move
+      toast.success(`Move: ${move.san}`, {
+        position: "bottom-right",
+        autoClose: 1500
+      });
+      
+      // Emit move to server with socket ID
       if (gameId) {
         socket.emit("move", { 
           gameId, 
@@ -336,25 +346,20 @@ const App = () => {
           fen: chess.fen(), 
           isWhiteTurn: newCurrentPlayer === "white",
           whiteTime, 
-          blackTime 
+          blackTime,
+          fromSocketId: socket.id // Send the socket ID to identify who made the move
         });
       }
-  
-      // Start the timer after the first move if needed
-      if (!gameStarted) {
-        setGameStarted(true);
-      }
-  
-      // Show toast notification
-      toast.info(`Move made: ${move.san}`, {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-  
+      
+      // Reset flag after a short delay to ensure socket event has been processed
+      setTimeout(() => {
+        setIsHandlingMyMove(false);
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error("Error making move:", error);
-      toast.error("Invalid move! Please try again.", {
+      toast.error("Error making move. Please try again.", {
         position: "bottom-right",
         autoClose: 3000
       });
