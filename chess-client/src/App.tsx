@@ -90,10 +90,9 @@ const App = () => {
       setGameStarted(true);
     });
 
-    socket.on("joinedAsSpectator", ({ gameId, message, currentFen }) => {
-      console.log("SPECTATOR EVENT RECEIVED:", { gameId, message });
+    socket.on("joinedAsSpectator", ({ gameId, message, currentFen, moveHistory }) => {
+      console.log("Joined as spectator:", { gameId, currentFen, moveHistory });
       setGameId(gameId);
-      setPlayerColor("white"); // Default view perspective
       setIsSpectator(true);
       
       // If a current FEN was provided, update the board
@@ -102,9 +101,25 @@ const App = () => {
         setFen(currentFen);
       }
       
-      toast.info(message || `You joined game ${gameId} as a spectator`, {
-        position: "bottom-right",
-        autoClose: 5000
+      // If move history was provided, update it
+      if (moveHistory && Array.isArray(moveHistory)) {
+        console.log("Received move history:", moveHistory);
+        // Convert moves to the format expected by the UI
+        const processedMoves = moveHistory.map(move => {
+          if (typeof move === 'string') {
+            return move;
+          } else if (move && move.san) {
+            return move.san;
+          }
+          return `${move.from}-${move.to}`;
+        });
+        
+        setMoveHistory(processedMoves);
+      }
+      
+      toast.info(`Watching game ${gameId} as spectator`, {
+        position: "bottom-center",
+        autoClose: 3000
       });
     });
 
@@ -131,9 +146,28 @@ const App = () => {
       setWhiteTime(whiteTime);
       setBlackTime(blackTime);
       
-      // Update move history
+      // Update move history - check if this is a new move to prevent duplicates
       if (move && move.san) {
-        setMoveHistory(prev => [...prev, move]);
+        setMoveHistory(prevHistory => {
+          // Check if the last move in history is the same as the new move to avoid duplicates
+          const lastMove = prevHistory.length > 0 ? prevHistory[prevHistory.length - 1] : null;
+          
+          // Only add the move if it's different from the last one or if it's the first move
+          if (!lastMove || 
+              (typeof lastMove === 'string' && lastMove !== move.san) || 
+              (typeof lastMove === 'object' && lastMove.san !== move.san)) {
+            
+            return [...prevHistory, move.san];
+          }
+          
+          // Return unchanged if it would be a duplicate
+          return prevHistory;
+        });
+        
+        // Update last move for highlighting
+        if (move.from && move.to) {
+          setLastMove({from: move.from, to: move.to});
+        }
       }
       
       // Only show notification for opponent moves

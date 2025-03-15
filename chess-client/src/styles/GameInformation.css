@@ -79,7 +79,9 @@
   overflow-y: auto; /* Enable vertical scrolling */
   background-color: white;
   border-radius: 4px;
-  max-height: 270px; /* Set a maximum height to ensure scrolling works */
+  max-height: 200px; /* Set a maximum height to ensure scrolling works */
+  border: 1px solid #dee2e6;
+  margin-top: 10px;
 }
 
 /* Add a visible scrollbar for better UX */
@@ -114,11 +116,35 @@
 }
 
 .move-history-table-container th {
-  background-color: #f9f9f9;
+  background-color: #f8f9fa;
   position: sticky;
   top: 0;
+  padding: 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
   z-index: 1;
-  box-shadow: 0 2px 2px -2px rgba(0,0,0,0.2);
+}
+
+.move-history-table-container td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.move-history-table-container tr.latest-move {
+  background-color: #fff3cd;
+}
+
+.latest-move-cell {
+  background-color: #fff3cd;
+}
+
+.move-history-table-container .no-moves {
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
 }
 
 /* Ensure the last row doesn't have a bottom border */
