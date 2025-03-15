@@ -90,7 +90,7 @@ const App = () => {
       setGameStarted(true);
     });
 
-    socket.on("joinedAsSpectator", ({ gameId, message, currentFen, moveHistory }) => {
+    socket.on("joinedAsSpectator", ({ gameId, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
       console.log("Joined as spectator:", { gameId, currentFen, moveHistory });
       setGameId(gameId);
       setIsSpectator(true);
@@ -101,20 +101,42 @@ const App = () => {
         setFen(currentFen);
       }
       
-      // If move history was provided, update it
+      // If timers were provided, update them
+      if (typeof whiteTime === 'number') setWhiteTime(whiteTime);
+      if (typeof blackTime === 'number') setBlackTime(blackTime);
+      
+      // If current player was provided, update it
+      if (currentPlayer) setCurrentPlayer(currentPlayer);
+      
+      // Process and set move history properly
       if (moveHistory && Array.isArray(moveHistory)) {
-        console.log("Received move history:", moveHistory);
-        // Convert moves to the format expected by the UI
+        console.log("Processing received move history:", moveHistory);
+        
+        // Convert all move objects to a consistent format (strings for display)
         const processedMoves = moveHistory.map(move => {
           if (typeof move === 'string') {
             return move;
           } else if (move && move.san) {
             return move.san;
+          } else if (move && move.from && move.to) {
+            return `${move.from}-${move.to}`;
           }
-          return `${move.from}-${move.to}`;
-        });
+          return '';
+        }).filter(Boolean); // Remove any empty entries
         
+        console.log("Processed move history:", processedMoves);
         setMoveHistory(processedMoves);
+        
+        // Set the last move for highlighting if available
+        if (moveHistory.length > 0) {
+          const lastMoveData = moveHistory[moveHistory.length - 1];
+          if (typeof lastMoveData !== 'string' && lastMoveData.from && lastMoveData.to) {
+            setLastMove({
+              from: lastMoveData.from,
+              to: lastMoveData.to
+            });
+          }
+        }
       }
       
       toast.info(`Watching game ${gameId} as spectator`, {

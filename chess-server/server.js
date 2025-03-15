@@ -236,6 +236,44 @@ io.on('connection', (socket) => {
     }, 3600000); // Clean up after 1 hour
   });
 
+  // In your chess-server code, modify the spectateGame handler
+
+  socket.on('spectateGame', ({ gameId }) => {
+    const game = games.get(gameId);
+    
+    if (!game) {
+      socket.emit('error', 'Game not found');
+      return;
+    }
+    
+    // Add spectator to the game
+    game.spectators.push(socket.id);
+    
+    // Format move history to be consistent with what clients expect
+    const formattedMoveHistory = game.moveHistory || [];
+    
+    // Join the game room
+    socket.join(`game:${gameId}`);
+    
+    // Emit the current game state to the spectator
+    socket.emit('joinedAsSpectator', { 
+      gameId,
+      message: 'You joined as a spectator',
+      currentFen: game.fen,
+      moveHistory: formattedMoveHistory, // Send complete move history
+      whiteTime: game.whiteTime,
+      blackTime: game.blackTime,
+      currentPlayer: game.turn === 'w' ? 'white' : 'black'
+    });
+    
+    // Notify players that a new spectator joined
+    io.to(`game:${gameId}`).emit('spectatorJoined', {
+      spectatorsCount: game.spectators.length
+    });
+    
+    console.log(`Spectator ${socket.id} joined game ${gameId}`);
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
     
