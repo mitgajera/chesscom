@@ -327,7 +327,6 @@ const App = () => {
             moveHistory={moveHistoryStrings}
           />
         </div>
-        <Timers whiteTime={whiteTime} blackTime={blackTime} formatTime={formatTime} />
         <div className="game-container">
           <div className="chessboard-container" ref={chessBoardRef}>
             <ChessBoard
