@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 // Create a single socket instance to be used throughout the app
-export const socket = io("http://localhost:3000", {
+export const socket = io(process.env.REACT_APP_SOCKET_URL, {
   transports: ["websocket", "polling"],
 });
 

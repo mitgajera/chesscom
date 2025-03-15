@@ -12,7 +12,7 @@ import "./styles/App.css";
 import "./styles/Controls.css";
 import "./styles/ChessBoard.css";
 
-const socket = io("http://localhost:3000", {
+const socket = io(process.env.REACT_APP_SOCKET_URL, {
   transports: ["websocket", "polling"],
 });
 
