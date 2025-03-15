@@ -18,7 +18,6 @@ interface ChessBoardProps {
 }
 
 const ChessBoard: React.FC<ChessBoardProps> = ({
-  fen,
   playerColor,
   createGame,
   joinGame,
@@ -28,6 +27,7 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
   const [gameId, setGameId] = useState<string | null>(null);
   const [game, setGame] = useState(new Chess());
   const [isSpectator, setIsSpectator] = useState<boolean>(false);
+  const [fen, setFen] = useState<string>(''); // Declare setFen here
 
   useEffect(() => {
     socket.on("gameCreated", (id: string) => {
@@ -83,8 +83,8 @@ const ChessBoard: React.FC<ChessBoardProps> = ({
       to: targetSquare,
       promotion: "q", 
     });
-
-    if (move === null) return false;const [fen, setFen] = useState<string>(''); // Declare setFen here
+    if (move === null) return false;
+    if (move === null) return false;
 
     setFen(game.fen());
     if (gameId) {

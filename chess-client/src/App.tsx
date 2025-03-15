@@ -50,18 +50,48 @@ const App = () => {
     });
 
     socket.on("gameCreated", ({ gameId }) => {
-      console.log(`Game created with ID: ${gameId}`);
       setGameId(gameId);
-      setPlayerColor("white");
+      setPlayerColor("white"); // Creator typically plays as white
       setIsSpectator(false);
-      alert(`Game created with ID: ${gameId}`);
+      
+      // Show success notification with game ID
+      toast.success(`Game created successfully! Game ID: ${gameId}`, {
+        position: "bottom-right",
+        autoClose: 5000, // Longer duration to ensure user sees the game ID
+      });
+      
+      // Optional: Copy the game ID to clipboard for easier sharing
+      navigator.clipboard.writeText(gameId)
+        .then(() => {
+          toast.info("Game ID copied to clipboard", {
+            position: "bottom-right",
+            autoClose: 1000,
+            delay: 1000 // Show this toast 1 second after the success toast
+          });
+        })
+        .catch(err => console.error("Could not copy game ID to clipboard", err));
     });
 
     socket.on("gameJoined", ({ gameId, color }) => {
+      console.log("GAME JOINED EVENT:", { gameId, color });
       setGameId(gameId);
       setPlayerColor(color);
       setIsSpectator(false);
-      alert(`Joined game with ID: ${gameId}`);
+      toast.success(`Successfully joined game with ID: ${gameId} as ${color}`, {
+        position: "bottom-right",
+        autoClose: 3000
+      });
+    });
+
+    socket.on("joinedAsSpectator", ({ gameId, message }) => {
+      console.log("SPECTATOR EVENT RECEIVED:", { gameId, message });
+      setGameId(gameId);
+      setPlayerColor("white"); // Default view perspective, could be configurable
+      setIsSpectator(true);
+      toast.info(message || `You joined game ${gameId} as a spectator`, {
+        position: "bottom-right",
+        autoClose: 5000 // Longer duration so user can read the message
+      });
     });
 
     socket.on("startGame", ({ gameId }) => {
@@ -90,9 +120,20 @@ const App = () => {
       clearInterval(timerRef.current!);
     });
 
+    // Handle specific errors including joining own game
     socket.on("error", (message: string) => {
-      alert(message);
+      toast.error(message, {
+        position: "bottom-right",
+        autoClose: 5000
+      });
     });
+
+    // Debug all incoming events
+    const debugSocketEvent = (event, data) => {
+      console.log(`Socket event received: ${event}`, data);
+    };
+    
+    socket.onAny(debugSocketEvent);
 
     return () => {
       socket.off("connect");
@@ -100,11 +141,13 @@ const App = () => {
       socket.off("connect_error");
       socket.off("gameCreated");
       socket.off("gameJoined");
+      socket.off("joinedAsSpectator");
       socket.off("startGame");
       socket.off("move");
       socket.off("timerUpdate");
       socket.off("gameOver");
       socket.off("error");
+      socket.offAny(debugSocketEvent);
       clearInterval(timerRef.current!);
     };
   }, [currentPlayer]);
@@ -139,10 +182,28 @@ const App = () => {
   }, [chessBoardRef]);
 
   const createGame = () => {
+    console.log("Creating new game");
     socket.emit("createGame");
   };
 
   const joinGame = () => {
+    if (!joinGameId.trim()) {
+      toast.warning("Please enter a game ID", {
+        position: "bottom-right",
+        autoClose: 3000
+      });
+      return;
+    }
+    
+    // Check if user is trying to join their own game
+    if (joinGameId === gameId) {
+      toast.error("You cannot join your own game!", {
+        position: "bottom-right",
+        autoClose: 5000
+      });
+      return;
+    }
+    
     console.log("Joining game with ID:", joinGameId);
     socket.emit("joinGame", { gameId: joinGameId });
   };

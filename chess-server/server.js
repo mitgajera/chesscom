@@ -41,27 +41,103 @@ function generateGameId() {
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
-  socket.on('createGame', () => {
-    const gameId = generateGameId();
+  socket.on("createGame", () => {
+    const gameId = generateGameId(); // Your existing function to generate game IDs
+    
+    // Create new game state
     games[gameId] = {
-      whiteTime: 600,
-      blackTime: 600,
+      creator: socket.id,
       whitePlayer: socket.id,
       blackPlayer: null,
+      whiteTime: 600,
+      blackTime: 600,
       spectators: [],
-      fen: 'start',
+      fen: 'start'
     };
+    
+    // Add socket to the game room
     socket.join(gameId);
-    socket.emit('gameCreated', { gameId });
+    
+    // Emit the gameCreated event with the game ID
+    socket.emit("gameCreated", { gameId });
+    
+    console.log(`Game created with ID: ${gameId}`);
   });
 
-  socket.on('joinGame', ({ gameId }) => {
-    if (games[gameId]) {
+  // Complete logic for joining a game
+
+  socket.on("joinGame", ({ gameId }) => {
+    const game = games[gameId];
+    
+    if (!game) {
+      socket.emit("error", "Game not found. Please check the game ID.");
+      return;
+    }
+    
+    // Check if this user is the creator of the game
+    if (game.creator === socket.id) {
+      socket.emit("error", "You cannot join your own game!");
+      return;
+    }
+    
+    // Check if BOTH player slots are filled
+    if (game.whitePlayer && game.blackPlayer) {
+      console.log(`Game ${gameId} already has two players. User ${socket.id} joining as spectator.`);
+      
+      // Add to spectators list
+      if (!game.spectators) {
+        game.spectators = [];
+      }
+      game.spectators.push(socket.id);
+      
+      // Join the socket room to receive game updates
       socket.join(gameId);
-      socket.emit('gameJoined', { gameId, color: 'black' });
-      io.to(gameId).emit('startGame', { gameId });
-    } else {
-      socket.emit('error', 'Game not found');
+      
+      // Explicitly notify client they are a spectator
+      socket.emit("joinedAsSpectator", {
+        gameId,
+        message: "Game already has two players. You joined as a spectator."
+      });
+      
+      // Send current game state to the spectator
+      socket.emit("gameState", {
+        fen: game.fen,
+        turn: game.turn,
+        moveHistory: game.moveHistory || [],
+        // Other game state properties
+        whiteTime: game.whiteTime,
+        blackTime: game.blackTime
+      });
+      
+      return;  // Important! Stop execution here
+    }
+    
+    // If we reach here, at least one player slot is open
+    let assignedColor;
+    
+    if (!game.whitePlayer) {
+      game.whitePlayer = socket.id;
+      assignedColor = "white";
+    } else if (!game.blackPlayer) {
+      game.blackPlayer = socket.id;
+      assignedColor = "black";
+    }
+    
+    // Join the socket room
+    socket.join(gameId);
+    
+    // Notify the client they joined successfully as a player
+    socket.emit("gameJoined", { gameId, color: assignedColor });
+    
+    // Notify other players that someone joined
+    socket.to(gameId).emit("opponentJoined", { color: assignedColor });
+    
+    console.log(`Player joined game ${gameId} as ${assignedColor}`);
+    
+    // If the game is now full, update game status
+    if (game.whitePlayer && game.blackPlayer) {
+      console.log(`Game ${gameId} is now full with both players`);
+      // Additional game start logic if needed
     }
   });
 
