@@ -61,4 +61,4 @@ jobs:
           app-name: 'chess'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_eb50fdc3051e4424942c822353efd0c8 }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_19b06e3b7212435f8e1ae354095d2b5c }}
