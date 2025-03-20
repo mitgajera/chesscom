@@ -61,9 +61,10 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_aa4261f1-85ed-4440-91e4-d88c57981040 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3323f94d-0323-40b3-8c24-5f859028b7ad }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ba24c7b8-729f-4629-ba1e-8b9f37285a00 }}
+
 
       - name: Restart Azure Web App (Optional)
         run: az webapp restart --name chess --resource-group <RESOURCE_GROUP>
@@ -76,3 +77,6 @@ jobs:
           app-name: 'chess'
           slot-name: 'Production'
           package: release.zip  # Explicitly defining package to avoid path issues
+
+
+          
