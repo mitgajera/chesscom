@@ -1,5 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# GitHub Actions Workflow: Deploy Node.js App to Azure Web App
 
 name: Build and deploy Node.js app to Azure Web App - chess
 
@@ -13,26 +12,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read  # Required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: Install Dependencies and Build
         run: |
           npm install
           npm run build --if-present
-          npm run test --if-present
+          npm test --if-present
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      - name: Package Application for Deployment
+        run: zip -r release.zip ./*
 
-      - name: Upload artifact for deployment job
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -45,30 +45,34 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write  # Required for requesting the JWT
+      contents: read  # Required for actions/checkout
+    timeout-minutes: 30  # Prevents infinite hanging deployments
 
     steps:
-      - name: Download artifact from build job
+      - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
 
-      - name: Unzip artifact for deployment
+      - name: Extract Build Artifact
         run: unzip release.zip
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1ED87CF26CAD428E83EBB5429514CEB2 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_7398C9F3584C4730B4A2E5087B1FDA35 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EA703F9A174145A99E380962F7DEE7B7 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Restart Azure Web App (Optional)
+        run: az webapp restart --name chess --resource-group <RESOURCE_GROUP>
+        continue-on-error: true  # Won't fail the pipeline if restart is unnecessary
+
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'chess'
           slot-name: 'Production'
-          package: .
-          
+          package: release.zip  # Explicitly defining package to avoid path issues
