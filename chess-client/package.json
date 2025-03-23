@@ -49,6 +49,7 @@
     "@types/uuid": "^10.0.0",
     "babel-loader": "^10.0.0",
     "css-loader": "^7.1.2",
+    "dotenv-webpack": "^8.1.0",
     "html-webpack-plugin": "^5.3.1",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.2.3",
