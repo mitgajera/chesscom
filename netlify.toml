@@ -1,11 +1,11 @@
 [build]
   base = "chess-client/"
   publish = "dist/"
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_SOCKET_URL = "https://chessmatecom.netlify.app"
+  REACT_APP_SOCKET_URL = "http://localhost:3000"
 
 [[redirects]]
   from = "/*"
