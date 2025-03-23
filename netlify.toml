@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_SOCKET_URL = "http://localhost:3000"
+  REACT_APP_SOCKET_URL = "https://chess-d9hjfzchd4gug6a8.centralindia-01.azurewebsites.net/"
 
 [[redirects]]
   from = "/*"
