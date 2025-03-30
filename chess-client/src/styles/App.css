@@ -1,7 +1,8 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  background-color: #f0f0f0;
+  font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
 }
 
 .app-container {
@@ -9,17 +10,21 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
+  background-color: white;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Roboto', sans-serif;
 }
 
 .game-container {
   display: flex;
-  align-items: flex-start; /* Align items at the top */
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
   margin-top: 20px;
+  justify-content: center;
 }
 
 .controls {
@@ -49,22 +54,155 @@ body {
 }
 
 .chessboard-container {
+  flex: 1;
+  min-width: 300px;
+  max-width: 600px;
   display: flex;
+  justify-content: center;
   flex-direction: column;
   align-items: center;
   width: 500px;
   height: 500px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
 }
 
-.game-information {
+.game-sidebar {
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.controls-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.control-button {
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.control-button:hover {
+  background-color: #3c5c8e;
+}
+
+.control-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.control-button.join-game {
+  background-color: #4caf50;
+}
+
+.control-button.join-game:hover {
+  background-color: #3e8e41;
+}
+
+.control-button.spectate-game {
+  background-color: #ff9800;
+}
+
+.control-button.spectate-game:hover {
+  background-color: #e68a00;
+}
+
+.control-button.resign-game {
+  background-color: #f44336;
+}
+
+.control-button.resign-game:hover {
+  background-color: #d32f2f;
+}
+
+.control-button.draw-game {
+  background-color: #9e9e9e;
+}
+
+.control-button.draw-game:hover {
+  background-color: #757575;
+}
+
+.game-id-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.role-indicator {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.role-indicator.white {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.role-indicator.black {
+  background-color: #333;
+  color: white;
+}
+
+.role-indicator.spectator {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.game-id-display {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 5px;
-  background-color: #fff;
+  align-items: center;
+  margin-bottom: 10px;
+  background-color: #f5f5f5;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.game-id-label {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.game-id {
+  font-family: monospace;
+  background-color: white;
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid #ddd;
+  margin-right: 8px;
+}
+
+.copy-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.copy-button:hover {
+  background-color: #0b7dda;
 }
 
 header {
@@ -128,4 +266,113 @@ header button.bg-primary {
 
 header button.bg-primary:hover {
   background-color: #0056b3;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.connection-status.connecting {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.connection-status.error, 
+.connection-status.disconnected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.reconnect-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.reconnect-button:hover {
+  background-color: #0069d9;
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-buttons button.accept-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.modal-buttons button.decline-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+/* Move history highlighting */
+.latest-move {
+  background-color: #f8f9c4;
+}
+
+.latest-move-cell {
+  background-color: #f8f9c4;
+  font-weight: bold;
+}
+
+/* Status indicators */
+.your-turn {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.game-over {
+  color: #f44336;
+  font-weight: bold;
 }

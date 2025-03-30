@@ -1,0 +1,339 @@
+/* This file adds responsiveness while preserving desktop layout */
+
+/* Base styles - will apply to all devices */
+.chessboard-container {
+  position: relative;
+  aspect-ratio: 1/1;
+}
+
+/* Force chessboard to be square */
+.chessboard-container > div {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix board appearance */
+.board-b72b1 {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Make sure each square is perfectly square */
+.square-55d63 {
+  float: left;
+  width: 12.5% !important;
+  height: 12.5% !important;
+  position: relative !important;
+}
+
+/* Correct piece positioning */
+.piece-417db {
+  position: absolute !important;
+  width: 85% !important;
+  height: 85% !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Responsive styles only for tablet and mobile devices */
+@media only screen and (max-width: 1023px) {
+  /* Game Container - Stack layout on mobile/tablet */
+  .game-container {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  /* Chessboard container - Adjust size for smaller screens */
+  .chessboard-container {
+    width: min(90vw, 500px) !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Game Information - Full width on mobile */
+  .game-information {
+    width: 100% !important;
+    max-width: min(90vw, 500px) !important;
+    margin-top: 20px !important;
+    margin-left: 0 !important;
+  }
+  
+  /* Controls container for smaller screens */
+  .controls-container {
+    width: 100% !important;
+  }
+  
+  /* Adjust control layout on smaller screens */
+  .controls {
+    flex-direction: column !important;
+  }
+  
+  .join-game-container {
+    flex-direction: column !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+  
+  .join-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: min(90vw, 500px) !important;
+  }
+  
+  .game-id-input {
+    width: 100% !important;
+    max-width: min(90vw, 500px) !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .game-controls {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .control-button {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Player information display */
+  .player-info {
+    flex-direction: column !important;
+  }
+  
+  .player {
+    margin-bottom: 10px !important;
+  }
+}
+
+/* Responsive styles for mobile and tablet devices */
+
+/* Base styling for mobile devices */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 10px;
+  }
+  
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .chessboard-container {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .game-sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .controls-container {
+    width: 100%;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .join-game-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .game-id-input {
+    width: 100%;
+  }
+  
+  .game-actions {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+  }
+  
+  .game-actions button {
+    flex: 1;
+  }
+  
+  .role-indicator {
+    font-size: 14px;
+    padding: 6px;
+  }
+  
+  .game-id-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .game-information {
+    padding: 10px;
+  }
+  
+  .move-history-table-container {
+    max-height: 180px;
+  }
+  
+  .move-history table {
+    font-size: 12px;
+  }
+  
+  .player-info {
+    padding: 8px;
+  }
+  
+  .connection-status {
+    padding: 6px;
+    font-size: 12px;
+  }
+}
+
+/* Extra small screens (mobile phones) */
+@media only screen and (max-width: 480px) {
+  .chessboard-container {
+    width: min(95vw, 350px) !important;
+  }
+  
+  .modal-content {
+    width: 90% !important;
+    padding: 15px !important;
+  }
+  
+  .game-information {
+    padding: 10px !important;
+  }
+  
+  .move-history-table-container {
+    max-height: 150px !important;
+  }
+}
+
+/* Mobile Styles (up to 576px) */
+@media (max-width: 576px) {
+  .app-container {
+    padding: 10px;
+  }
+  
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .chessboard-container, 
+  .game-sidebar {
+    min-width: 100%;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+  }
+  
+  .join-game-controls {
+    flex-direction: column;
+  }
+  
+  .game-id-input {
+    width: 100%;
+  }
+  
+  .modal-content {
+    width: 95%;
+    padding: 15px;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 481px) and (max-width: 768px) {
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .chessboard-container {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .game-sidebar {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .join-game-controls {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* Tablet Styles (577px to 992px) */
+@media (min-width: 577px) and (max-width: 992px) {
+  .game-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .chessboard-container, 
+  .game-sidebar {
+    min-width: 90%;
+  }
+}
+
+/* Small desktops */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .game-container {
+    gap: 15px;
+  }
+  
+  .chessboard-container {
+    width: 400px;
+  }
+}
+
+/* Toast position fix for mobile */
+@media (max-width: 768px) {
+  /* Adjust toast container position for mobile */
+  .Toastify__toast-container--bottom-right,
+  .Toastify__toast-container--bottom-center,
+  .Toastify__toast-container--bottom-left {
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Make toasts smaller on mobile */
+  .Toastify__toast {
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Reposition game-id-display for small screens */
+  .game-id-display {
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+  }
+  
+  .copy-button {
+    margin-left: 0;
+    margin-top: 5px;
+  }
+}
+
+/* Ensure board container is centered */
+@media (max-width: 500px) {
+  .board-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}

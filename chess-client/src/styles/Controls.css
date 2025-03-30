@@ -2,15 +2,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 15px 0;
+  width: 100%;
+  margin-bottom: 20px;
   padding: 10px;
 }
 
 .control-buttons {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
   width: 100%;
   max-width: 600px;
 }
@@ -20,45 +20,89 @@
   border: none;
   border-radius: 4px;
   font-size: 16px;
-  cursor: pointer;
   font-weight: 500;
+  cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
 }
 
+.control-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.control-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.control-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .create-game {
-  background-color: #4caf50;
+  background-color: #28a745;
   color: white;
 }
 
-.create-game:hover {
-  background-color: #45a049;
+.create-game:hover:not(:disabled) {
+  background-color: #218838;
 }
 
 .join-game-controls {
   display: flex;
-  gap: 10px;
   flex: 1;
+  gap: 10px;
 }
 
 .game-id-input {
+  flex: 1;
+  min-width: 150px;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  font-size: 16px;
-  flex-grow: 1;
-  max-width: 200px;
+  font-size: 14px;
+}
+
+.game-id-input:disabled {
+  background-color: #e9ecef;
 }
 
 .join-game {
-  background-color: #2196f3;
+  background-color: #007bff;
   color: white;
 }
 
-.join-game:hover {
-  background-color: #0b7dda;
+.join-game:hover:not(:disabled) {
+  background-color: #0069d9;
 }
 
-.control-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.spectate-game {
+  background-color: #6c757d;
+  color: white;
+}
+
+.spectate-game:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.game-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.resign-game {
+  background-color: #dc3545;
+  color: white;
+}
+
+.resign-game:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.draw-game {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.draw-game:hover:not(:disabled) {
+  background-color: #e0a800;
 }

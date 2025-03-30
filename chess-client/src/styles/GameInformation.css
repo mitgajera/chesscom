@@ -4,9 +4,9 @@
   width: 300px;
   height: 500px; /* Match the height of the chessboard */
   padding: 15px;
-  background-color: #f5f5f5;
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-left: 20px;
   overflow: hidden; /* Hide overflow for the container itself */
 }
@@ -15,51 +15,85 @@
   margin-top: 0;
   margin-bottom: 15px;
   text-align: center;
+  color: #343a40;
+  font-size: 1.4rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 8px;
 }
 
 .player-info {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .player {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 8px;
-  background-color: white;
+  align-items: center;
+  padding: 8px 12px;
   border-radius: 4px;
+  background-color: #f8f9fa;
+  transition: background-color 0.3s;
+}
+
+.player.active-player {
+  background-color: #e9ecef;
+  border-left: 3px solid #007bff;
+}
+
+.player-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
 }
 
 .player-color {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  margin-right: 8px;
+  display: inline-block;
 }
 
 .player-color.white {
-  background-color: white;
-  border: 1px solid #ccc;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
 }
 
 .player-color.black {
-  background-color: #333;
+  background-color: #343a40;
 }
 
 .player-time {
-  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.player-time.low-time {
+  color: #dc3545;
 }
 
 .game-status {
-  padding: 8px;
-  background-color: white;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
   border-radius: 4px;
-  margin-bottom: 15px;
   text-align: center;
+}
+
+.game-status p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.your-turn {
+  color: #28a745;
+}
+
+.game-over {
+  color: #dc3545;
 }
 
 .move-history {
@@ -72,6 +106,8 @@
 .move-history h3 {
   margin-top: 0;
   margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: #495057;
 }
 
 .move-history-table-container {
@@ -111,7 +147,7 @@
 .move-history-table-container th,
 .move-history-table-container td {
   padding: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #dee2e6;
   text-align: center;
 }
 
@@ -130,15 +166,16 @@
 .move-history-table-container td {
   padding: 6px 8px;
   text-align: center;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .move-history-table-container tr.latest-move {
-  background-color: #fff3cd;
+  background-color: rgba(0, 123, 255, 0.1);
 }
 
 .latest-move-cell {
-  background-color: #fff3cd;
+  font-weight: 600;
+  color: #007bff;
 }
 
 .move-history-table-container .no-moves {
