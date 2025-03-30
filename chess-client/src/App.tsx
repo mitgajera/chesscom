@@ -1,66 +1,106 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
-import { Chess } from 'chess.js';  // Import Chess as named export
+import { Chess } from 'chess.js';
 import Layout from "./components/Layout";
 import Controls from "./components/Controls";
-import Timers from "./components/Timers";
 import ChessBoard from "./components/ChessBoard";
 import GameInformation from "./components/GameInformation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import socket from "./socket";
 import "./styles/App.css";
-import "./styles/Controls.css";
 import "./styles/ChessBoard.css";
+import "./styles/Responsive.css";
 
-const SOCKET_URL = typeof process !== 'undefined' && process.env && process.env.REACT_APP_SOCKET_URL 
-  ? process.env.REACT_APP_SOCKET_URL 
-  : "https://chess-game-app.azurewebsites.net/";
-
-const socket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"],
-});
-
-// Initialize chess instance properly
+// Initialize chess instance
 const chess = new Chess();
 
 const App = () => {
+  // Game state
   const [gameId, setGameId] = useState<string | null>(null);
   const [fen, setFen] = useState<string>(chess.fen());
   const [joinGameId, setJoinGameId] = useState<string>("");
-  const [playerColor, setPlayerColor] = useState<"white" | "black">("white");
+  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(null);
   const [isSpectator, setIsSpectator] = useState<boolean>(false);
-  const [whiteTime, setWhiteTime] = useState<number>(600); // 10 minutes in seconds
-  const [blackTime, setBlackTime] = useState<number>(600); // 10 minutes in seconds
+  const [whiteTime, setWhiteTime] = useState<number>(600); // 10 minutes
+  const [blackTime, setBlackTime] = useState<number>(600); // 10 minutes
   const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">("white");
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [moveHistory, setMoveHistory] = useState<any[]>([]);
+  const [lastMove, setLastMove] = useState<{from: string, to: string} | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  const [showDrawDialog, setShowDrawDialog] = useState<boolean>(false);
+  const [gameOver, setGameOver] = useState<boolean>(false);
+  const [gameOverMessage, setGameOverMessage] = useState<string>("");
+  const [winner, setWinner] = useState<string | null>(null);
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const chessBoardRef = useRef<HTMLDivElement>(null);
-  const [lastMoveByMe, setLastMoveByMe] = useState<string | null>(null);
-  const [isHandlingMyMove, setIsHandlingMyMove] = useState<boolean>(false);
-  
+
+  // Track connection status
   useEffect(() => {
-    console.log("App component mounted");
-    
-    socket.on("connect", () => {
+    const onConnect = () => {
       console.log("Connected to WebSocket server");
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Connection error:", error);
-      toast.error("Failed to connect to server. Please try again.", {
+      setConnectionStatus('connected');
+      toast.success("Connected to server", {
         position: "bottom-right",
+        autoClose: 2000
       });
-    });
+    };
 
+    const onDisconnect = () => {
+      console.log("Disconnected from WebSocket server");
+      setConnectionStatus('disconnected');
+      toast.error("Disconnected from server. Attempting to reconnect...", {
+        position: "bottom-right",
+        autoClose: 2000
+      });
+    };
+
+    const onConnectError = (error: any) => {
+      console.error("Connection error:", error);
+      setConnectionStatus('error');
+      toast.error("Failed to connect to server. Please check your connection.", {
+        position: "bottom-right",
+        autoClose: false
+      });
+    };
+
+    // Set up event listeners
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
+
+    // Initial connection status
+    if (socket.connected) {
+      setConnectionStatus('connected');
+    }
+
+    // Try reconnecting if not connected
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
+    };
+  }, []);
+
+  // Game event listeners
+  useEffect(() => {
     socket.on("gameCreated", ({ gameId }) => {
       setGameId(gameId);
       setPlayerColor("white");
       setIsSpectator(false);
+      
+      // Reset the chess board to initial state
+      chess.reset();
+      setFen(chess.fen());
+      setMoveHistory([]);
+      setGameOver(false);
+      setGameOverMessage("");
+      setWinner(null);
       
       // Show success notification with game ID
       toast.success(`Game created successfully! Game ID: ${gameId}`, {
@@ -84,17 +124,31 @@ const App = () => {
       setGameId(gameId);
       setPlayerColor(color);
       setIsSpectator(false);
+      
+      // Reset chess state when joining a game
+      chess.reset();
+      setFen(chess.fen());
+      setMoveHistory([]);
+      setGameStarted(true);
+      setGameOver(false);
+      setGameOverMessage("");
+      setWinner(null);
+      
       toast.success(`Successfully joined game with ID: ${gameId} as ${color}`, {
         position: "bottom-right",
         autoClose: 3000
       });
-      
-      // Reset the chessboard to initial position
-      setFen(chess.fen());
+    });
+    
+    socket.on("opponentJoined", ({ color }) => {
+      toast.info(`Opponent joined as ${color}. Game starting!`, {
+        position: "bottom-right",
+        autoClose: 3000
+      });
       setGameStarted(true);
     });
 
-    socket.on("joinedAsSpectator", ({ gameId, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
+    socket.on("joinedAsSpectator", ({ gameId, message, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
       console.log("Joined as spectator:", { gameId, currentFen, moveHistory });
       setGameId(gameId);
       setIsSpectator(true);
@@ -116,7 +170,7 @@ const App = () => {
       if (moveHistory && Array.isArray(moveHistory)) {
         console.log("Processing received move history:", moveHistory);
         
-        // Convert all move objects to a consistent format (strings for display)
+        // Convert all move objects to a consistent format
         const processedMoves = moveHistory.map(move => {
           if (typeof move === 'string') {
             return move;
@@ -144,7 +198,7 @@ const App = () => {
       }
       
       toast.info(`Watching game ${gameId} as spectator`, {
-        position: "bottom-center",
+        position: "bottom-right",
         autoClose: 3000
       });
     });
@@ -162,46 +216,52 @@ const App = () => {
 
     socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime, fromSocketId }) => {
       // Update local chess instance with the new FEN
-      chess.load(fen);
-      setFen(fen);
+      console.log("Received move from server:", { fen, move, isWhiteTurn });
       
-      // Update current player turn
-      setCurrentPlayer(isWhiteTurn ? "white" : "black");
-      
-      // Update timers
-      setWhiteTime(whiteTime);
-      setBlackTime(blackTime);
-      
-      // Update move history - check if this is a new move to prevent duplicates
-      if (move && move.san) {
-        setMoveHistory(prevHistory => {
-          // Check if the last move in history is the same as the new move to avoid duplicates
-          const lastMove = prevHistory.length > 0 ? prevHistory[prevHistory.length - 1] : null;
-          
-          // Only add the move if it's different from the last one or if it's the first move
-          if (!lastMove || 
-              (typeof lastMove === 'string' && lastMove !== move.san) || 
-              (typeof lastMove === 'object' && lastMove.san !== move.san)) {
-            
-            return [...prevHistory, move.san];
+      try {
+        chess.load(fen);
+        setFen(fen);
+        
+        // Update current player turn (this is crucial for turn-based play)
+        const newCurrentPlayer = isWhiteTurn ? "white" : "black";
+        setCurrentPlayer(newCurrentPlayer);
+        console.log("Current player set to:", newCurrentPlayer);
+        
+        // Update timers if they were provided
+        if (typeof whiteTime === 'number') setWhiteTime(whiteTime);
+        if (typeof blackTime === 'number') setBlackTime(blackTime);
+        
+        // Update move history and last move
+        if (move) {
+          // Add move to history if it has a san notation
+          if (move.san) {
+            setMoveHistory(prevHistory => {
+              const lastMove = prevHistory.length > 0 ? prevHistory[prevHistory.length - 1] : null;
+              
+              if (!lastMove || 
+                  (typeof lastMove === 'string' && lastMove !== move.san) || 
+                  (typeof lastMove === 'object' && lastMove.san !== move.san)) {
+                return [...prevHistory, move.san];
+              }
+              return prevHistory;
+            });
           }
           
-          // Return unchanged if it would be a duplicate
-          return prevHistory;
-        });
-        
-        // Update last move for highlighting
-        if (move.from && move.to) {
-          setLastMove({from: move.from, to: move.to});
+          // Update last move for highlighting
+          if (move.from && move.to) {
+            setLastMove({from: move.from, to: move.to});
+          }
         }
-      }
-      
-      // Only show notification for opponent moves
-      if (fromSocketId !== socket.id) {
-        toast.info(`Opponent moved: ${move?.san || ""}`, {
-          position: "bottom-right",
-          autoClose: 1500
-        });
+        
+        // Only show notification for opponent moves
+        if (fromSocketId !== socket.id) {
+          toast.info(`Opponent moved: ${move?.san || ""}`, {
+            position: "bottom-right",
+            autoClose: 1500
+          });
+        }
+      } catch (error) {
+        console.error("Error processing move:", error);
       }
     });
 
@@ -209,16 +269,29 @@ const App = () => {
       setWhiteTime(whiteTime);
       setBlackTime(blackTime);
     });
+    
+    socket.on("drawOffered", () => {
+      setShowDrawDialog(true);
+      toast.info("Your opponent has offered a draw", {
+        position: "bottom-right",
+        autoClose: false
+      });
+    });
 
     socket.on("gameOver", (result) => {
       const { message, winner } = typeof result === 'string' ? { message: result, winner: null } : result;
+      
+      setGameOver(true);
+      setGameOverMessage(message);
+      setWinner(winner);
+      setGameStarted(false);
+      
       toast.info(message, {
-        position: "center",
+        position: "bottom-center",
         autoClose: 10000
       });
       
-      setGameStarted(false);
-      clearInterval(timerRef.current!);
+      if (timerRef.current) clearInterval(timerRef.current);
     });
 
     socket.on("error", (message) => {
@@ -228,29 +301,29 @@ const App = () => {
       });
     });
 
-    const debugSocketEvent = (event, data) => {
+    const debugSocketEvent = (event: string, data: any) => {
       console.log(`Socket event received: ${event}`, data);
     };
     
     socket.onAny(debugSocketEvent);
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("connect_error");
       socket.off("gameCreated");
       socket.off("gameJoined");
+      socket.off("opponentJoined");
       socket.off("joinedAsSpectator");
       socket.off("startGame");
       socket.off("move");
       socket.off("timerUpdate");
+      socket.off("drawOffered");
       socket.off("gameOver");
       socket.off("error");
       socket.offAny(debugSocketEvent);
-      clearInterval(timerRef.current!);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
+  // Timer effect
   useEffect(() => {
     if (gameStarted && currentPlayer === playerColor && !isSpectator && gameId) {
       timerRef.current = setInterval(() => {
@@ -258,7 +331,7 @@ const App = () => {
           setWhiteTime((prev) => {
             const newTime = prev - 1;
             if (newTime <= 0) {
-              clearInterval(timerRef.current!);
+              if (timerRef.current) clearInterval(timerRef.current);
               socket.emit("timeUp", { gameId, loser: "white" });
               return 0;
             }
@@ -269,7 +342,7 @@ const App = () => {
           setBlackTime((prev) => {
             const newTime = prev - 1;
             if (newTime <= 0) {
-              clearInterval(timerRef.current!);
+              if (timerRef.current) clearInterval(timerRef.current);
               socket.emit("timeUp", { gameId, loser: "black" });
               return 0;
             }
@@ -279,11 +352,22 @@ const App = () => {
         }
       }, 1000);
     } else {
-      clearInterval(timerRef.current!);
+      if (timerRef.current) clearInterval(timerRef.current);
     }
-    return () => clearInterval(timerRef.current!);
-  }, [gameStarted, currentPlayer, playerColor, isSpectator, gameId]);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [gameStarted, currentPlayer, playerColor, isSpectator, gameId, whiteTime, blackTime]);
 
+  // Manual reconnect function
+  const handleReconnect = () => {
+    setConnectionStatus('connecting');
+    socket.connect();
+    toast.info("Attempting to reconnect...", {
+      position: "bottom-right",
+      autoClose: 2000
+    });
+  };
+
+  // Game actions
   const createGame = () => {
     console.log("Creating new game");
     socket.emit("createGame");
@@ -309,6 +393,19 @@ const App = () => {
     
     console.log("Joining game with ID:", joinGameId);
     socket.emit("joinGame", { gameId: joinGameId });
+  };
+
+  const spectateGame = () => {
+    if (!joinGameId.trim()) {
+      toast.warning("Please enter a game ID to spectate", {
+        position: "bottom-right",
+        autoClose: 3000
+      });
+      return;
+    }
+    
+    console.log("Spectating game with ID:", joinGameId);
+    socket.emit("spectateGame", { gameId: joinGameId });
   };
 
   const resignGame = () => {
@@ -340,27 +437,51 @@ const App = () => {
       });
     }
   };
+  
+  const acceptDraw = () => {
+    if (gameId && !isSpectator) {
+      socket.emit("acceptDraw", { gameId });
+      setShowDrawDialog(false);
+    }
+  };
+  
+  const declineDraw = () => {
+    if (gameId && !isSpectator) {
+      socket.emit("declineDraw", { gameId });
+      setShowDrawDialog(false);
+    }
+  };
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     // Check if spectator
     if (isSpectator) {
-      toast.warning("You are only watching the game and cannot make moves.", {
+      toast.warning("You are only watching the game", {
         position: "bottom-right",
         autoClose: 3000
       });
       return false;
     }
-  
+
+    // Get current turn from chess.js (w = white, b = black)
+    const chessTurn = chess.turn();
+    const currentTurn = chessTurn === 'w' ? "white" : "black";
+    
+    // Log debug info
+    console.log("Move attempt:", {
+      playerColor,
+      currentTurn,
+      isMyTurn: playerColor === currentTurn
+    });
+    
     // Check if it's this player's turn
-    const currentTurn = chess.turn() === 'w' ? "white" : "black";
     if (playerColor !== currentTurn) {
-      toast.warning("It's not your turn.", {
+      toast.warning(`It's ${currentTurn}'s turn. Please wait for your turn.`, {
         position: "bottom-right",
         autoClose: 3000
       });
       return false;
     }
-  
+
     // Try to make the move
     try {
       // Make the move
@@ -369,60 +490,39 @@ const App = () => {
         to: targetSquare,
         promotion: "q" // Always promote to queen for simplicity
       });
-  
+
       // If invalid move
       if (!move) {
-        toast.error("Invalid move!", {
-          position: "bottom-right",
-          autoClose: 3000
-        });
         return false;
       }
       
-      // Set flag to indicate we're handling our own move
-      setIsHandlingMyMove(true);
-      
       // Update UI states
       setFen(chess.fen());
+      setLastMove({from: sourceSquare, to: targetSquare});
       
-      // Get the new turn after the move
-      const newCurrentPlayer = chess.turn() === "w" ? "white" : "black";
-      setCurrentPlayer(newCurrentPlayer);
+      // Determine the next player's turn after this move
+      const nextTurn = chess.turn() === 'w' ? "white" : "black";
+      setCurrentPlayer(nextTurn);
       
       // Add to move history
       setMoveHistory(prev => [...prev, move]);
       
-      // Show notification for the player's own move
-      toast.success(`Move: ${move.san}`, {
-        position: "bottom-right",
-        autoClose: 1500
-      });
-      
-      // Emit move to server with socket ID
+      // Emit move to server
       if (gameId) {
         socket.emit("move", { 
           gameId, 
           move: move,
           fen: chess.fen(), 
-          isWhiteTurn: newCurrentPlayer === "white",
+          isWhiteTurn: chess.turn() === 'w',
           whiteTime, 
           blackTime,
-          fromSocketId: socket.id // Send the socket ID to identify who made the move
+          fromPlayerId: socket.id
         });
       }
-      
-      // Reset flag after a short delay to ensure socket event has been processed
-      setTimeout(() => {
-        setIsHandlingMyMove(false);
-      }, 500);
       
       return true;
     } catch (error) {
       console.error("Error making move:", error);
-      toast.error("Error making move. Please try again.", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
       return false;
     }
   };
@@ -433,64 +533,8 @@ const App = () => {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
-  // @ts-ignore - Working around type incompatibility
-  const moveHistoryData = chess.history();
-  // Change the variable name from moveHistory to formattedMoveHistory
-  const formattedMoveHistory = moveHistoryData.map((san: string, index: number) => {
-    // Create a simple Move object with just the properties we need
-    return {
-      san: san,
-      // Add placeholder values for required properties
-      from: "unknown",
-      to: "unknown",
-      color: index % 2 === 0 ? "w" : "b",
-      piece: "p"
-    };
-  });
-
-  const timeLeft = { white: whiteTime, black: blackTime };
-
-  function onMove(move: string): void {
-    const [sourceSquare, targetSquare, promotion] = move.split("");
-    const moveObj = chess.move({
-      from: (sourceSquare + targetSquare) as any, // Fix type error
-      to: promotion as any,
-      promotion: "q", // Use a valid promotion value
-    });
-  
-    if (moveObj === null) {
-      alert("Invalid move");
-      return;
-    }
-  
-    setFen(chess.fen());
-    setCurrentPlayer(currentPlayer === "white" ? "black" : "white");
-  
-    if (gameId) {
-      socket.emit("move", { gameId, fen: chess.fen(), isWhiteTurn: currentPlayer === "white", whiteTime, blackTime });
-    }
-  }
-
-  function onGameOver(): void {
-    alert("Game over!");
-    setGameId(null);
-    setFen(new Chess().fen());
-    setWhiteTime(300);
-    setBlackTime(300);
-    setCurrentPlayer("white");
-    clearInterval(timerRef.current!);
-  }
-
   // Convert the moveHistory to an array of strings for the components
-  type Move = {
-    san: string;
-    from: string;
-    to: string;
-    color: string;
-    piece: string;
-  };
-
-  const moveHistoryStrings = moveHistory.map((move: Move) => {
+  const moveHistoryStrings = moveHistory.map((move) => {
     if (typeof move === 'string') {
       return move;
     } else {
@@ -501,37 +545,99 @@ const App = () => {
   return (
     <Layout>
       <div className="app-container">
+        {/* Connection status indicator */}
+        {connectionStatus !== 'connected' && (
+          <div className={`connection-status ${connectionStatus}`}>
+            {connectionStatus === 'connecting' && "Connecting to server..."}
+            {connectionStatus === 'error' && (
+              <>
+                Failed to connect with server
+                <button onClick={handleReconnect} className="reconnect-button">
+                  Reconnect
+                </button>
+              </>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <>
+                Disconnected from server
+                <button onClick={handleReconnect} className="reconnect-button">
+                  Reconnect
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="controls-container">
           <Controls
             gameId={gameId || ""}
             createGame={createGame}
             joinGame={joinGame}
+            spectateGame={spectateGame}
             joinGameId={joinGameId}
             setJoinGameId={setJoinGameId}
             resignGame={resignGame}
             offerDraw={offerDraw}
             gameStatus={chess.isGameOver() ? "over" : "ongoing"}
-            gameResult={chess.isCheckmate() ? (currentPlayer === "white" ? "black" : "white") : "draw"}
-            moveHistory={moveHistoryStrings}
+            isWhite={playerColor === "white"}
+            isBlack={playerColor === "black"}
+            isSpectator={isSpectator}
+            isConnected={connectionStatus === 'connected'}
           />
         </div>
+        
         <div className="game-container">
           <div className="chessboard-container" ref={chessBoardRef}>
             <ChessBoard
               fen={fen}
               onDrop={onDrop}
-              playerColor={playerColor}
+              playerColor={playerColor || "white"}
               isSpectator={isSpectator}
-              gameId={gameId || ""} // Pass the gameId here
+              gameId={gameId || ""}
+              lastMove={lastMove}
             />
           </div>
-          <GameInformation
-            blackPlayerTime={formatTime(blackTime)}
-            whitePlayerTime={formatTime(whiteTime)}
-            gameStatus={chess.isGameOver() ? "over" : "ongoing"}
-            moveHistory={moveHistoryStrings}
-          />
+          <div className="game-sidebar">
+            <GameInformation
+              blackPlayerTime={formatTime(blackTime)}
+              whitePlayerTime={formatTime(whiteTime)}
+              gameStatus={chess.isGameOver() ? "over" : "ongoing"}
+              moveHistory={moveHistoryStrings}
+              currentPlayer={currentPlayer}
+              playerColor={playerColor || "white"}
+              isSpectator={isSpectator}
+            />
+          </div>
         </div>
+        
+        {/* Draw Dialog */}
+        {showDrawDialog && (
+          <div className="modal-backdrop">
+            <div className="modal-content">
+              <h3>Draw Offered</h3>
+              <p>Your opponent has offered a draw. Do you accept?</p>
+              <div className="modal-buttons">
+                <button onClick={declineDraw} className="btn decline-btn">Decline</button>
+                <button onClick={acceptDraw} className="btn accept-btn">Accept</button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Game Over Dialog */}
+        {gameOver && (
+          <div className="modal-backdrop">
+            <div className="modal-content">
+              <h3>{winner ? (winner === playerColor ? "You Won!" : "You Lost") : "Game Over"}</h3>
+              <p>{gameOverMessage}</p>
+              <div className="modal-buttons">
+                <button onClick={() => setGameOver(false)} className="btn primary-btn">Close</button>
+                <button onClick={createGame} className="btn success-btn">New Game</button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <ToastContainer />
       </div>
     </Layout>

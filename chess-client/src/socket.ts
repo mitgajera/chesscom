@@ -1,31 +1,29 @@
 import { io } from "socket.io-client";
 
-// Create a single socket instance to be used throughout the app
-export const socket = io(process.env.REACT_APP_SOCKET_URL, {
-  transports: ["websocket", "polling"],
+// Use environment variable or fallback to localhost
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL?.trim() || "http://localhost:3000";
+console.log("Connecting to server at:", SOCKET_URL);
+
+// Create and export socket instance with improved configuration
+const socket = io(SOCKET_URL, {
+  transports: ['polling', 'websocket'], // Try both for better compatibility
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
+  timeout: 20000,
+  autoConnect: true
 });
 
-// Allow custom event listening from any component
-export const addSocketListener = (event: string, callback: (...args: any[]) => void) => {
-  socket.on(event, callback);
-};
+// Debug connection events
+socket.on("connect", () => {
+  console.log("✅ Connected to server using", socket.io.engine.transport.name);
+});
 
-// Clean up event listeners
-export const removeSocketListener = (event: string, callback?: (...args: any[]) => void) => {
-  if (callback) {
-    socket.off(event, callback);
-  } else {
-    socket.off(event);
-  }
-};
+socket.on("connect_error", (error) => {
+  console.error("❌ Connection error:", error.message);
+});
 
-// Debug helper
-export const enableSocketDebug = (enabled: boolean = true) => {
-  if (enabled) {
-    socket.onAny((event, ...args) => {
-      console.log(`[Socket Debug] Event: ${event}`, args);
-    });
-  } else {
-    socket.offAny();
-  }
-};
+socket.on("disconnect", () => {
+  console.log("❌ Disconnected from server");
+});
+
+export default socket;
