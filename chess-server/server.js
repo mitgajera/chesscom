@@ -3,19 +3,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors');
 const { Chess } = require('chess.js');
 const path = require('path');
 
 const app = express();
+app.use(cors());
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Basic health check route
+app.get('/health', (req, res) => {
+  res.send({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
 
+// Enhanced Socket.IO configuration
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Allow all origins in development
+    methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: ["*"]
+  },
+  transports: ['polling', 'websocket'],
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
+
+// Listen on all interfaces with your port
 const PORT = process.env.PORT || 3000;
-
-app.use(express.static(path.join(__dirname, 'dist')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 let games = {}; // Store ongoing games
@@ -25,8 +46,9 @@ function generateGameId() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
+// Socket event handlers
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  console.log('Client connected:', socket.id, 'using', socket.conn.transport.name);
 
   socket.on("createGame", () => {
     const gameId = generateGameId();
@@ -125,26 +147,43 @@ io.on('connection', (socket) => {
     if (!games[gameId]) return;
     
     const game = games[gameId];
-    game.chess.load(fen);
-    game.whiteTime = whiteTime;
-    game.blackTime = blackTime;
     
-    // Store the move in the game's move history
+    // Update game state with the new position
+    game.chess.load(fen);
+    game.fen = fen;
+    
+    // Update timers
+    if (typeof whiteTime === 'number') game.whiteTime = whiteTime;
+    if (typeof blackTime === 'number') game.blackTime = blackTime;
+    
+    // Store the move in history (ensure move is in correct format)
     if (move) {
-      game.moveHistory.push(move);
+      // Ensure we have a consistent format for move history
+      const moveToStore = typeof move === 'string' ? move : {
+        from: move.from,
+        to: move.to,
+        san: move.san,
+        piece: move.piece,
+        color: move.color
+      };
+      
+      game.moveHistory.push(moveToStore);
     }
     
-    // Broadcast the move to all clients in the game room including who made the move
+    // Determine which color's turn it is
+    const currentTurn = game.chess.turn() === 'w' ? 'white' : 'black';
+    
+    // Broadcast the move to all clients
     io.to(gameId).emit('move', { 
       fen, 
       move, 
-      isWhiteTurn, 
-      whiteTime, 
-      blackTime,
-      fromPlayerId // Pass the ID of who made the move
+      isWhiteTurn: currentTurn === 'white',
+      whiteTime: game.whiteTime, 
+      blackTime: game.blackTime,
+      fromPlayerId
     });
     
-    // Check if the game is over after this move
+    // Check if the game is over
     if (game.chess.isGameOver()) {
       let message = "";
       
@@ -236,10 +275,9 @@ io.on('connection', (socket) => {
     }, 3600000); // Clean up after 1 hour
   });
 
-  // In your chess-server code, modify the spectateGame handler
-
+  // Fix spectator error - Replace games.get with regular object access
   socket.on('spectateGame', ({ gameId }) => {
-    const game = games.get(gameId);
+    const game = games[gameId]; // NOT games.get(gameId)
     
     if (!game) {
       socket.emit('error', 'Game not found');
@@ -249,25 +287,22 @@ io.on('connection', (socket) => {
     // Add spectator to the game
     game.spectators.push(socket.id);
     
-    // Format move history to be consistent with what clients expect
-    const formattedMoveHistory = game.moveHistory || [];
-    
     // Join the game room
-    socket.join(`game:${gameId}`);
+    socket.join(gameId);
     
-    // Emit the current game state to the spectator
+    // Send complete game state to spectator
     socket.emit('joinedAsSpectator', { 
       gameId,
       message: 'You joined as a spectator',
-      currentFen: game.fen,
-      moveHistory: formattedMoveHistory, // Send complete move history
+      currentFen: game.chess.fen(),
+      moveHistory: game.moveHistory || [],
       whiteTime: game.whiteTime,
       blackTime: game.blackTime,
-      currentPlayer: game.turn === 'w' ? 'white' : 'black'
+      currentPlayer: game.chess.turn() === 'w' ? 'white' : 'black'
     });
     
-    // Notify players that a new spectator joined
-    io.to(`game:${gameId}`).emit('spectatorJoined', {
+    // Notify everyone about new spectator
+    io.to(gameId).emit('spectatorCountUpdate', {
       spectatorsCount: game.spectators.length
     });
     
@@ -311,8 +346,4 @@ io.on('connection', (socket) => {
       }
     }
   });
-});
-
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
