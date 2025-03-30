@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { Chess } from 'chess.js';
 import Layout from "./components/Layout";
 import Controls from "./components/Controls";
-import ChessBoard from "./components/ChessBoard";
 import GameInformation from "./components/GameInformation";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import socket from "./socket";
+import MobileToaster, { toast } from "./components/MobileToaster";
+import ResponsiveBoard from "./components/ResponsiveBoard";
 import "./styles/App.css";
+import "./styles/Controls.css";
 import "./styles/ChessBoard.css";
 import "./styles/Responsive.css";
+import "./styles/ToastFix.css";
+import socket from "./socket";
 
 // Initialize chess instance
 const chess = new Chess();
@@ -588,13 +589,13 @@ const App = () => {
         
         <div className="game-container">
           <div className="chessboard-container" ref={chessBoardRef}>
-            <ChessBoard
+            <ResponsiveBoard
               fen={fen}
               onDrop={onDrop}
               playerColor={playerColor || "white"}
               isSpectator={isSpectator}
-              gameId={gameId || ""}
               lastMove={lastMove}
+              chess={chess}
             />
           </div>
           <div className="game-sidebar">
@@ -638,7 +639,7 @@ const App = () => {
           </div>
         )}
         
-        <ToastContainer />
+        <MobileToaster />
       </div>
     </Layout>
   );
