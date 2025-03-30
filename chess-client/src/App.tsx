@@ -37,6 +37,39 @@ const App = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const chessBoardRef = useRef<HTMLDivElement>(null);
 
+  // Add this helper function in your App component
+  const showMoveNotification = (
+    moveData: any, 
+    fromCurrentPlayer: boolean, 
+    moveColor: "white" | "black"
+  ) => {
+    // If the current player made the move, only show confirmation if we want to
+    if (fromCurrentPlayer) {
+      // Optionally show a confirmation the move was made successfully
+      // Commented out to avoid duplicate notifications
+      // toast.success(`Move: ${moveData?.san || ""}`, { 
+      //   position: "bottom-right", 
+      //   autoClose: 1000 
+      // });
+      return;
+    }
+    
+    // For spectators, show which color made the move
+    if (isSpectator) {
+      toast.info(`${moveColor === "white" ? "⚪ White" : "⚫ Black"} moved: ${moveData?.san || ""}`, {
+        position: "bottom-right",
+        autoClose: 2000
+      });
+      return;
+    }
+    
+    // For the opponent, just show the move
+    toast.info(`Opponent moved: ${moveData?.san || ""}`, {
+      position: "bottom-right",
+      autoClose: 2000
+    });
+  };
+
   // Track connection status
   useEffect(() => {
     const onConnect = () => {
@@ -215,15 +248,19 @@ const App = () => {
       });
     });
 
-    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime, fromSocketId }) => {
+    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime, fromSocketId, playerColor: movePlayerColor }) => {
       // Update local chess instance with the new FEN
-      console.log("Received move from server:", { fen, move, isWhiteTurn });
+      console.log("Received move from server:", { fen, move, isWhiteTurn, movePlayerColor });
       
       try {
+        // Determine which player made the move (the opposite of isWhiteTurn)
+        const moveColor = isWhiteTurn ? "black" : "white"; // isWhiteTurn is the next player's turn
+        
+        // Load new position
         chess.load(fen);
         setFen(fen);
         
-        // Update current player turn (this is crucial for turn-based play)
+        // Update current player turn
         const newCurrentPlayer = isWhiteTurn ? "white" : "black";
         setCurrentPlayer(newCurrentPlayer);
         console.log("Current player set to:", newCurrentPlayer);
@@ -252,14 +289,10 @@ const App = () => {
           if (move.from && move.to) {
             setLastMove({from: move.from, to: move.to});
           }
-        }
-        
-        // Only show notification for opponent moves
-        if (fromSocketId !== socket.id) {
-          toast.info(`Opponent moved: ${move?.san || ""}`, {
-            position: "bottom-right",
-            autoClose: 1500
-          });
+          
+          // Only show notification for appropriate situations
+          const fromCurrentPlayer = fromSocketId === socket.id;
+          showMoveNotification(move, fromCurrentPlayer, moveColor);
         }
       } catch (error) {
         console.error("Error processing move:", error);
@@ -464,19 +497,18 @@ const App = () => {
     }
 
     // Get current turn from chess.js (w = white, b = black)
-    const chessTurn = chess.turn();
-    const currentTurn = chessTurn === 'w' ? "white" : "black";
+    const chessTurn = chess.turn() === 'w' ? "white" : "black";
     
-    // Log debug info
-    console.log("Move attempt:", {
+    // Debug information
+    console.log({
       playerColor,
-      currentTurn,
-      isMyTurn: playerColor === currentTurn
+      chessTurn,
+      isMyTurn: playerColor === chessTurn
     });
     
     // Check if it's this player's turn
-    if (playerColor !== currentTurn) {
-      toast.warning(`It's ${currentTurn}'s turn. Please wait for your turn.`, {
+    if (playerColor !== chessTurn) {
+      toast.warning(`It's ${chessTurn}'s turn. Please wait for your turn.`, {
         position: "bottom-right",
         autoClose: 3000
       });
@@ -499,14 +531,17 @@ const App = () => {
       
       // Update UI states
       setFen(chess.fen());
+      
+      // Update last move for highlighting
       setLastMove({from: sourceSquare, to: targetSquare});
       
       // Determine the next player's turn after this move
-      const nextTurn = chess.turn() === 'w' ? "white" : "black";
-      setCurrentPlayer(nextTurn);
+      const isWhiteTurn = chess.turn() === 'w';
+      const newCurrentPlayer = isWhiteTurn ? "white" : "black";
+      setCurrentPlayer(newCurrentPlayer);
       
       // Add to move history
-      setMoveHistory(prev => [...prev, move]);
+      setMoveHistory(prev => [...prev, move.san]);
       
       // Emit move to server
       if (gameId) {
@@ -514,10 +549,17 @@ const App = () => {
           gameId, 
           move: move,
           fen: chess.fen(), 
-          isWhiteTurn: chess.turn() === 'w',
+          isWhiteTurn: isWhiteTurn,
           whiteTime, 
           blackTime,
-          fromPlayerId: socket.id
+          fromPlayerId: socket.id,
+          playerColor: playerColor  // Add player color to the move data
+        });
+        
+        // Show a success toast for the player who made the move
+        toast.success(`You moved: ${move.san}`, {
+          position: "bottom-right",
+          autoClose: 1500
         });
       }
       

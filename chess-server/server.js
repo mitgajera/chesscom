@@ -156,22 +156,16 @@ io.on('connection', (socket) => {
     if (typeof whiteTime === 'number') game.whiteTime = whiteTime;
     if (typeof blackTime === 'number') game.blackTime = blackTime;
     
-    // Store the move in history (ensure move is in correct format)
+    // Store the move in history
     if (move) {
-      // Ensure we have a consistent format for move history
-      const moveToStore = typeof move === 'string' ? move : {
-        from: move.from,
-        to: move.to,
-        san: move.san,
-        piece: move.piece,
-        color: move.color
-      };
-      
-      game.moveHistory.push(moveToStore);
+      game.moveHistory.push(move);
     }
     
-    // Determine which color's turn it is
+    // Determine which color's turn it is from the chess board state
+    // Note: After the move, it's the other player's turn
     const currentTurn = game.chess.turn() === 'w' ? 'white' : 'black';
+    // The player who made the move is the opposite of the current turn
+    const movePlayerColor = currentTurn === 'white' ? 'black' : 'white';
     
     // Broadcast the move to all clients
     io.to(gameId).emit('move', { 
@@ -180,10 +174,11 @@ io.on('connection', (socket) => {
       isWhiteTurn: currentTurn === 'white',
       whiteTime: game.whiteTime, 
       blackTime: game.blackTime,
-      fromPlayerId
+      fromPlayerId,
+      playerColor: movePlayerColor  // Add the color of the player who made the move
     });
     
-    // Check if the game is over
+    // Check if the game is over after this move
     if (game.chess.isGameOver()) {
       let message = "";
       

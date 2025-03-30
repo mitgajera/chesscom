@@ -1,0 +1,42 @@
+/* Mobile toast positioning and sizing fixes */
+@media (max-width: 768px) {
+  /* Toast container positioning for mobile */
+  .Toastify__toast-container--bottom-center,
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-right {
+    bottom: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Toast sizing and styling for mobile */
+  .Toastify__toast {
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    padding: 10px !important;
+    min-height: unset !important;
+  }
+  
+  /* Toast content styling for mobile */
+  .Toastify__toast-body {
+    font-size: 14px !important;
+    padding: 5px 8px !important;
+  }
+  
+  /* Toast close button for mobile */
+  .Toastify__close-button {
+    padding: 4px !important;
+  }
+  
+  /* Make toasts appear at the very bottom */
+  .Toastify__toast-container {
+    position: fixed !important;
+  }
+  
+  /* Ensure toasts don't overlap board too much */
+  .Toastify__toast {
+    opacity: 0.9 !important;
+  }
+}
