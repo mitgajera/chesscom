@@ -431,3 +431,206 @@
     margin: 0 auto;
   }
 }
+
+/* Mobile-first responsive design */
+
+/* Base styles (shared across all devices) */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Small devices (mobile phones, less than 768px) */
+@media (max-width: 767px) {
+  /* Layout changes for mobile */
+  .app-container {
+    padding: 0 !important;
+  }
+  
+  .game-container {
+    flex-direction: column !important;
+    padding: 8px !important;
+    gap: 12px !important;
+  }
+  
+  .controls-container {
+    padding: 10px !important;
+  }
+  
+  /* Game controls for mobile */
+  .game-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .game-id-input {
+    width: 100% !important;
+    font-size: 14px !important;
+    padding: 10px !important;
+  }
+  
+  .control-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  
+  .control-buttons button {
+    margin: 0 !important;
+    padding: 10px !important;
+    font-size: 14px !important;
+  }
+  
+  /* Chess board container */
+  .chessboard-container {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  
+  .board-wrapper {
+    width: 100% !important;
+    max-width: 95vw !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+  
+  .chess-board {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  /* Game ID display */
+  .game-id-display {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+  }
+  
+  .game-id {
+    font-size: 14px !important;
+    width: 100% !important;
+    text-align: center !important;
+    overflow-x: auto !important;
+    padding: 5px 0 !important;
+  }
+  
+  .copy-button {
+    width: 80% !important;
+    margin: 5px auto !important;
+  }
+  
+  /* Game information sidebar */
+  .game-sidebar {
+    width: 100% !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+  
+  /* Modals */
+  .modal-content {
+    width: 90% !important;
+    max-width: 320px !important;
+    padding: 15px !important;
+  }
+  
+  .modal-buttons {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  
+  .modal-buttons button {
+    width: 100% !important;
+    padding: 12px !important;
+  }
+  
+  /* Connection status */
+  .connection-status {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    z-index: 1001 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    font-size: 14px !important;
+  }
+  
+  .reconnect-button {
+    margin-left: 8px !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Player info */
+  .player-info {
+    padding: 8px !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+  }
+  
+  .player-timer {
+    font-size: 16px !important;
+    font-weight: bold !important;
+  }
+  
+  /* Role indicator */
+  .role-indicator {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    border-radius: 0 0 0 8px !important;
+    z-index: 10 !important;
+  }
+}
+
+/* For small landscape phones */
+@media (max-width: 767px) and (orientation: landscape) {
+  .game-container {
+    flex-direction: row !important;
+  }
+  
+  .chessboard-container {
+    width: 60% !important;
+  }
+  
+  .game-sidebar {
+    width: 40% !important;
+    margin-left: 10px !important;
+  }
+  
+  .board-wrapper {
+    max-width: 60vw !important;
+    max-height: 60vw !important;
+  }
+}
+
+/* For medium devices (tablets) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .game-container {
+    padding: 15px !important;
+  }
+  
+  .chessboard-container {
+    width: 60% !important;
+  }
+  
+  .game-sidebar {
+    width: 40% !important;
+  }
+}
+
+/* Desktop remains unchanged */

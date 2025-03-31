@@ -15,6 +15,7 @@ interface ControlsProps {
   isBlack: boolean;
   isSpectator: boolean;
   isConnected: boolean;
+  isMobile?: boolean;
 }
 
 const Controls: React.FC<ControlsProps> = ({

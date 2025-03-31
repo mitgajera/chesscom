@@ -9,6 +9,7 @@ interface GameInformationProps {
   currentPlayer: string;
   playerColor: string;
   isSpectator?: boolean;
+  isMobile?: boolean;
 }
 
 const GameInformation: React.FC<GameInformationProps> = ({

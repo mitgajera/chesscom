@@ -7,6 +7,7 @@ import GameInformation from "./components/GameInformation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import socket from "./socket";
+import { enhanceForTouchDevices } from './utils/TouchEnhancer';
 import "./styles/App.css";
 import "./styles/Controls.css";
 import "./styles/ChessBoard.css";
@@ -17,6 +18,16 @@ import "./styles/ToastFix.css";
 const chess = new Chess();
 
 const App = () => {
+  // Add at the top of your component
+  useEffect(() => {
+    // Initialize touch enhancements once when the app loads
+    const isTouchDevice = enhanceForTouchDevices();
+    
+    if (isTouchDevice) {
+      console.log('Touch device detected, enhancements applied');
+    }
+  }, []);
+
   // Unified toast function to handle mobile vs desktop properly
   const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, options = {}) => {
     const isMobileView = window.innerWidth < 768;
@@ -374,6 +385,52 @@ const App = () => {
     };
   }, [gameStarted, gameOver, currentPlayer, playerColor, isSpectator, gameId, whiteTime, blackTime]);
 
+  // Add this after your other useEffect hooks
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      // Force redraw of chessboard on orientation change
+      if (chessBoardRef.current) {
+        // Small delay to allow orientation to complete
+        setTimeout(() => {
+          // Update isMobile reference
+          isMobile.current = window.innerWidth < 768;
+          
+          // Force re-render or adjustment of the chess board
+          const currentWidth = chessBoardRef.current.clientWidth;
+          chessBoardRef.current.style.width = `${currentWidth - 1}px`;
+          setTimeout(() => {
+            chessBoardRef.current.style.width = '';
+          }, 50);
+        }, 100);
+      }
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => window.removeEventListener('orientationchange', handleOrientationChange);
+  }, []);
+
+  useEffect(() => {
+    const handleOrientation = () => {
+      // For Safari iOS which doesn't always trigger resize events properly
+      setTimeout(() => {
+        // Force recalculation of responsive elements
+        const event = window.document.createEvent('UIEvents');
+        event.initUIEvent('resize', true, false, window, 0);
+        window.dispatchEvent(event);
+        
+        // Force redraw of board if needed
+        if (chessBoardRef.current) {
+          const currentWidth = chessBoardRef.current.clientWidth;
+          chessBoardRef.current.style.width = `${currentWidth - 1}px`;
+          setTimeout(() => chessBoardRef.current.style.width = '', 50);
+        }
+      }, 200);
+    };
+
+    window.addEventListener('orientationchange', handleOrientation);
+    return () => window.removeEventListener('orientationchange', handleOrientation);
+  }, []);
+
   // Manual reconnect function
   const handleReconnect = () => {
     setConnectionStatus('connecting');
@@ -534,13 +591,13 @@ const App = () => {
   return (
     <Layout>
       <div className="app-container">
-        {/* Connection status indicator */}
+        {/* Connection status indicator (fixed position on mobile) */}
         {connectionStatus !== 'connected' && (
           <div className={`connection-status ${connectionStatus}`}>
             {connectionStatus === 'connecting' && "Connecting to server..."}
             {connectionStatus === 'error' && (
               <>
-                Failed to connect with server
+                Failed to connect
                 <button onClick={handleReconnect} className="reconnect-button">
                   Reconnect
                 </button>
@@ -548,7 +605,7 @@ const App = () => {
             )}
             {connectionStatus === 'disconnected' && (
               <>
-                Disconnected from server
+                Disconnected
                 <button onClick={handleReconnect} className="reconnect-button">
                   Reconnect
                 </button>
@@ -557,6 +614,7 @@ const App = () => {
           </div>
         )}
 
+        {/* Game controls - simplified for mobile */}
         <div className="controls-container">
           <Controls
             gameId={gameId || ""}
@@ -572,20 +630,48 @@ const App = () => {
             isBlack={playerColor === "black"}
             isSpectator={isSpectator}
             isConnected={connectionStatus === 'connected'}
+            isMobile={isMobile.current}
           />
         </div>
         
+        {/* Main game area with responsive layout */}
         <div className="game-container">
           <div className="chessboard-container" ref={chessBoardRef}>
-            <ResponsiveBoard
-              fen={fen}
-              onDrop={onDrop}
-              playerColor={playerColor || "white"}
-              isSpectator={isSpectator}
-              lastMove={lastMove}
-              chess={chess}
-            />
+            <div className="board-wrapper">
+              {gameId && (
+                <div className="game-id-display">
+                  <span className="game-id-label">Game ID:</span>
+                  <span className="game-id">{gameId}</span>
+                  <button 
+                    className="copy-button" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(gameId);
+                      showToast('info', "Game ID copied");
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
+              
+              <div className={`role-indicator ${isSpectator ? 'spectator' : playerColor || 'white'}`}>
+                {isSpectator 
+                  ? "Spectating" 
+                  : `Playing as ${playerColor || 'white'}`}
+              </div>
+              
+              {/* Your chess board component */}
+              <ResponsiveBoard
+                fen={fen}
+                onDrop={onDrop}
+                playerColor={playerColor || "white"}
+                isSpectator={isSpectator}
+                lastMove={lastMove}
+                chess={chess}
+              />
+            </div>
           </div>
+          
           <div className="game-sidebar">
             <GameInformation
               blackPlayerTime={formatTime(blackTime)}
@@ -595,11 +681,12 @@ const App = () => {
               currentPlayer={currentPlayer}
               playerColor={playerColor || "white"}
               isSpectator={isSpectator}
+              isMobile={isMobile.current}
             />
           </div>
         </div>
         
-        {/* Draw Dialog */}
+        {/* Dialogs and modals - adapted for mobile */}
         {showDrawDialog && (
           <div className="modal-backdrop">
             <div className="modal-content">
@@ -613,15 +700,15 @@ const App = () => {
           </div>
         )}
         
-        {/* Game Over Dialog */}
+        {/* Game over dialog with appropriate messages for spectators */}
         {gameOver && (
           <div className="modal-backdrop">
             <div className="modal-content">
               {isSpectator ? (
-                // Spectator view
+                // Spectator view shows neutral message
                 <h3>{winner ? `${winner === 'white' ? 'White' : 'Black'} Won!` : "Game Over"}</h3>
               ) : (
-                // Player view
+                // Player view shows personalized message
                 <h3>{winner ? (winner === playerColor ? "You Won!" : "You Lost") : "Game Over"}</h3>
               )}
               
@@ -631,9 +718,6 @@ const App = () => {
                 <button onClick={() => setGameOver(false)} className="btn primary-btn">Close</button>
                 {!isSpectator && (
                   <button onClick={createGame} className="btn success-btn">New Game</button>
-                )}
-                {isSpectator && (
-                  <button onClick={() => navigate('/')} className="btn primary-btn">Back to Home</button>
                 )}
               </div>
             </div>
@@ -652,15 +736,6 @@ const App = () => {
           draggable={!isMobile.current}
           pauseOnHover={!isMobile.current}
           theme="light"
-          style={isMobile.current ? {
-            width: '100%',
-            maxWidth: '100%',
-            margin: 0,
-            padding: 0,
-            bottom: 0,
-            left: 0,
-            right: 0
-          } : undefined}
           toastClassName={isMobile.current ? "mobile-toast" : ""}
           bodyClassName={isMobile.current ? "mobile-toast-body" : ""}
         />
