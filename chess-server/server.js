@@ -270,9 +270,9 @@ io.on('connection', (socket) => {
     }, 3600000); // Clean up after 1 hour
   });
 
-  // Fix spectator error - Replace games.get with regular object access
+  // Fix spectator handling to include proper move history
   socket.on('spectateGame', ({ gameId }) => {
-    const game = games[gameId]; // NOT games.get(gameId)
+    const game = games[gameId]; // Changed games.get(gameId) to games[gameId]
     
     if (!game) {
       socket.emit('error', 'Game not found');
@@ -285,12 +285,37 @@ io.on('connection', (socket) => {
     // Join the game room
     socket.join(gameId);
     
+    // Ensure moveHistory exists
+    if (!game.moveHistory) {
+      game.moveHistory = [];
+    }
+    
+    // Ensure all moves have from/to properties for highlighting
+    const enhancedMoveHistory = game.moveHistory.map(move => {
+      // If move is already an object with from/to, return as is
+      if (typeof move === 'object' && move.from && move.to) {
+        return move;
+      }
+      
+      // If it's a string like "e2e4", extract from/to
+      if (typeof move === 'string' && move.length >= 4) {
+        return {
+          from: move.substring(0, 2),
+          to: move.substring(2, 4),
+          san: move
+        };
+      }
+      
+      // As fallback, return original move
+      return move;
+    });
+    
     // Send complete game state to spectator
     socket.emit('joinedAsSpectator', { 
       gameId,
       message: 'You joined as a spectator',
       currentFen: game.chess.fen(),
-      moveHistory: game.moveHistory || [],
+      moveHistory: enhancedMoveHistory,
       whiteTime: game.whiteTime,
       blackTime: game.blackTime,
       currentPlayer: game.chess.turn() === 'w' ? 'white' : 'black'

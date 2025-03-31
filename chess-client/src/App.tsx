@@ -2,21 +2,42 @@ import React, { useState, useEffect, useRef } from "react";
 import { Chess } from 'chess.js';
 import Layout from "./components/Layout";
 import Controls from "./components/Controls";
+import ResponsiveBoard from "./components/ResponsiveBoard";
 import GameInformation from "./components/GameInformation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ResponsiveBoard from "./components/ResponsiveBoard";
+import socket from "./socket";
 import "./styles/App.css";
 import "./styles/Controls.css";
 import "./styles/ChessBoard.css";
 import "./styles/Responsive.css";
 import "./styles/ToastFix.css";
-import socket from "./socket";
 
 // Initialize chess instance
 const chess = new Chess();
 
 const App = () => {
+  // Unified toast function to handle mobile vs desktop properly
+  const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, options = {}) => {
+    const isMobileView = window.innerWidth < 768;
+    
+    const defaultOptions = {
+      position: isMobileView ? "bottom-center" : "bottom-right",
+      autoClose: isMobileView ? 2000 : 4000,
+      hideProgressBar: isMobileView,
+      closeOnClick: true,
+      pauseOnHover: !isMobileView,
+      draggable: !isMobileView,
+      style: isMobileView ? { 
+        fontSize: '14px',
+        maxWidth: '100%',
+        padding: '8px'
+      } : undefined
+    };
+    
+    toast[type](message, { ...defaultOptions, ...options });
+  };
+
   // Game state
   const [gameId, setGameId] = useState<string | null>(null);
   const [fen, setFen] = useState<string>(chess.fen());
@@ -158,7 +179,7 @@ const App = () => {
       setGameStarted(true);
     });
 
-    socket.on("joinedAsSpectator", ({ gameId, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
+    socket.on("joinedAsSpectator", ({ gameId, message, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
       console.log("Joined as spectator:", { gameId, currentFen, moveHistory });
       setGameId(gameId);
       setIsSpectator(true);
@@ -178,26 +199,29 @@ const App = () => {
       
       // Process and set move history properly
       if (moveHistory && Array.isArray(moveHistory)) {
-        console.log("Received move history:", moveHistory);
+        console.log("Processing move history for spectator:", moveHistory);
         
-        // Convert all move objects to a consistent format
+        // Convert all move objects to a consistent format for display
         const processedMoves = moveHistory.map(move => {
+          // Handle different move formats that might come from the server
           if (typeof move === 'string') {
             return move;
           } else if (move && move.san) {
             return move.san;
           } else if (move && move.from && move.to) {
+            // If we only have from/to coordinates, create a basic move notation
             return `${move.from}-${move.to}`;
           }
           return '';
-        }).filter(Boolean);
+        }).filter(Boolean); // Remove any empty entries
         
+        console.log("Processed moves:", processedMoves);
         setMoveHistory(processedMoves);
         
         // Set the last move for highlighting if available
         if (moveHistory.length > 0) {
           const lastMoveData = moveHistory[moveHistory.length - 1];
-          if (typeof lastMoveData !== 'string' && lastMoveData.from && lastMoveData.to) {
+          if (typeof lastMoveData === 'object' && lastMoveData.from && lastMoveData.to) {
             setLastMove({
               from: lastMoveData.from,
               to: lastMoveData.to
@@ -206,7 +230,7 @@ const App = () => {
         }
       }
       
-      showMobileAwareToast('info', `Watching game ${gameId}`);
+      showMobileAwareToast('info', `Watching game ${gameId} as spectator`, { autoClose: 3000 });
     });
 
     socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime }) => {
@@ -256,6 +280,7 @@ const App = () => {
     });
 
     socket.on("gameOver", (result) => {
+      console.log("Game over event received:", result);
       const { message, winner } = typeof result === 'string' ? { message: result, winner: null } : result;
       
       setGameOver(true);
@@ -263,7 +288,17 @@ const App = () => {
       setWinner(winner);
       setGameStarted(false);
       
-      showMobileAwareToast('info', message, { autoClose: 10000 });
+      // Show different messages based on player type
+      if (isSpectator) {
+        const winnerColor = winner === 'white' ? 'White' : 'Black';
+        showToast('info', `Game over: ${winnerColor} ${winner ? 'won' : 'drew the game'}. ${message}`, { autoClose: 10000 });
+      } else if (winner === playerColor) {
+        showToast('success', `You won! ${message}`, { autoClose: 10000 });
+      } else if (winner) {
+        showToast('error', `You lost! ${message}`, { autoClose: 10000 });
+      } else {
+        showToast('info', `Game over: ${message}`, { autoClose: 10000 });
+      }
       
       if (timerRef.current) clearInterval(timerRef.current);
     });
@@ -285,30 +320,47 @@ const App = () => {
     };
   }, []);
 
-  // Timer effect
+  // Modified timer effect that correctly handles both players' timers
   useEffect(() => {
-    if (gameStarted && currentPlayer === playerColor && !isSpectator && gameId) {
+    // Only run timer when game has started and not over
+    if (gameStarted && !gameOver && gameId) {
       timerRef.current = setInterval(() => {
         if (currentPlayer === "white") {
+          // Only decrement white's timer when it's white's turn
           setWhiteTime((prev) => {
             const newTime = prev - 1;
             if (newTime <= 0) {
               if (timerRef.current) clearInterval(timerRef.current);
-              socket.emit("timeUp", { gameId, loser: "white" });
+              // Only emit timeUp if you're the player whose time ran out
+              if (playerColor === "white" && !isSpectator) {
+                socket.emit("timeUp", { gameId, loser: "white" });
+              }
               return 0;
             }
-            socket.emit("timerUpdate", { gameId, whiteTime: newTime, blackTime });
+            
+            // Only send timer updates if you're one of the players (not spectator)
+            if (!isSpectator && playerColor) {
+              socket.emit("timerUpdate", { gameId, whiteTime: newTime, blackTime });
+            }
             return newTime;
           });
         } else {
+          // Only decrement black's timer when it's black's turn
           setBlackTime((prev) => {
             const newTime = prev - 1;
             if (newTime <= 0) {
               if (timerRef.current) clearInterval(timerRef.current);
-              socket.emit("timeUp", { gameId, loser: "black" });
+              // Only emit timeUp if you're the player whose time ran out
+              if (playerColor === "black" && !isSpectator) {
+                socket.emit("timeUp", { gameId, loser: "black" });
+              }
               return 0;
             }
-            socket.emit("timerUpdate", { gameId, whiteTime, blackTime: newTime });
+            
+            // Only send timer updates if you're one of the players (not spectator)
+            if (!isSpectator && playerColor) {
+              socket.emit("timerUpdate", { gameId, whiteTime, blackTime: newTime });
+            }
             return newTime;
           });
         }
@@ -316,8 +368,11 @@ const App = () => {
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [gameStarted, currentPlayer, playerColor, isSpectator, gameId, whiteTime, blackTime]);
+    
+    return () => { 
+      if (timerRef.current) clearInterval(timerRef.current); 
+    };
+  }, [gameStarted, gameOver, currentPlayer, playerColor, isSpectator, gameId, whiteTime, blackTime]);
 
   // Manual reconnect function
   const handleReconnect = () => {
@@ -562,20 +617,33 @@ const App = () => {
         {gameOver && (
           <div className="modal-backdrop">
             <div className="modal-content">
-              <h3>{winner ? (winner === playerColor ? "You Won!" : "You Lost") : "Game Over"}</h3>
+              {isSpectator ? (
+                // Spectator view
+                <h3>{winner ? `${winner === 'white' ? 'White' : 'Black'} Won!` : "Game Over"}</h3>
+              ) : (
+                // Player view
+                <h3>{winner ? (winner === playerColor ? "You Won!" : "You Lost") : "Game Over"}</h3>
+              )}
+              
               <p>{gameOverMessage}</p>
+              
               <div className="modal-buttons">
                 <button onClick={() => setGameOver(false)} className="btn primary-btn">Close</button>
-                <button onClick={createGame} className="btn success-btn">New Game</button>
+                {!isSpectator && (
+                  <button onClick={createGame} className="btn success-btn">New Game</button>
+                )}
+                {isSpectator && (
+                  <button onClick={() => navigate('/')} className="btn primary-btn">Back to Home</button>
+                )}
               </div>
             </div>
           </div>
         )}
         
-        {/* Responsive Toast Container */}
+        {/* Mobile-friendly toast container */}
         <ToastContainer
           position={isMobile.current ? "bottom-center" : "bottom-right"}
-          autoClose={3000}
+          autoClose={isMobile.current ? 2000 : 4000}
           hideProgressBar={isMobile.current}
           newestOnTop={false}
           closeOnClick
@@ -585,13 +653,16 @@ const App = () => {
           pauseOnHover={!isMobile.current}
           theme="light"
           style={isMobile.current ? {
-            width: 'auto',
-            maxWidth: '90%',
-            bottom: '10px',
-            right: '10px',
-            left: '10px'
+            width: '100%',
+            maxWidth: '100%',
+            margin: 0,
+            padding: 0,
+            bottom: 0,
+            left: 0,
+            right: 0
           } : undefined}
           toastClassName={isMobile.current ? "mobile-toast" : ""}
+          bodyClassName={isMobile.current ? "mobile-toast-body" : ""}
         />
       </div>
     </Layout>

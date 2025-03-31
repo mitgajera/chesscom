@@ -1,12 +1,12 @@
-/* Mobile toast positioning fixes */
+/* Mobile toast fixes */
 @media (max-width: 768px) {
-  /* Move toast container to bottom of screen with proper positioning */
+  /* Fix toast container position */
   .Toastify__toast-container {
     width: 100% !important;
+    padding: 0 !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    padding: 0 !important;
     margin: 0 !important;
     z-index: 9999 !important;
     position: fixed !important;
@@ -14,47 +14,64 @@
   
   /* Make toasts smaller and more compact */
   .Toastify__toast {
+    margin: 0 !important;
     margin-bottom: 0 !important;
     border-radius: 0 !important;
+    padding: 8px 10px !important;
     min-height: auto !important;
-    padding: 10px 12px !important;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+    max-height: 80px !important;
+    overflow-y: auto !important;
   }
   
-  /* Improve toast content layout */
+  /* Adjust toast content */
   .Toastify__toast-body {
     font-size: 14px !important;
-    padding: 6px 8px !important;
+    padding: 4px 6px !important;
     margin: 0 !important;
   }
   
-  /* Make close button easier to tap */
+  /* Make close button more prominent */
   .Toastify__close-button {
     padding: 8px !important;
-    opacity: 1 !important;
+    font-size: 20px !important;
   }
   
-  /* Improve toast animations */
-  .Toastify__bounce-enter--bottom-center,
-  .Toastify__bounce-exit--bottom-center {
-    animation-duration: 0.3s !important;
+  /* Make toast progress bar thinner */
+  .Toastify__progress-bar {
+    height: 3px !important;
+  }
+  
+  /* Add space at bottom to avoid overlapping with controls */
+  .app-container {
+    padding-bottom: 60px !important;
+  }
+  
+  /* Make sure game container is responsive */
+  .game-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
   }
 }
 
-/* Ensure connection status doesn't overlap the board */
-@media (max-width: 768px) {
-  .connection-status {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    margin-bottom: 0;
-    border-radius: 0;
+/* Fix game ID display on mobile */
+@media (max-width: 480px) {
+  .game-id-display {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 5px !important;
   }
   
-  /* Add padding to ensure the board doesn't get hidden under status bar */
-  .app-container {
-    padding-bottom: 60px;
+  .copy-button {
+    margin-left: 0 !important;
+    margin-top: 5px !important;
+    width: 100% !important;
+  }
+  
+  .game-id {
+    width: 100% !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
