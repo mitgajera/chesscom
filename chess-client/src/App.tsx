@@ -3,7 +3,8 @@ import { Chess } from 'chess.js';
 import Layout from "./components/Layout";
 import Controls from "./components/Controls";
 import GameInformation from "./components/GameInformation";
-import MobileToaster, { toast } from "./components/MobileToaster";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import ResponsiveBoard from "./components/ResponsiveBoard";
 import "./styles/App.css";
 import "./styles/Controls.css";
@@ -36,67 +37,56 @@ const App = () => {
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const chessBoardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useRef<boolean>(window.innerWidth < 768);
 
-  // Add this helper function in your App component
-  const showMoveNotification = (
-    moveData: any, 
-    fromCurrentPlayer: boolean, 
-    moveColor: "white" | "black"
-  ) => {
-    // If the current player made the move, only show confirmation if we want to
-    if (fromCurrentPlayer) {
-      // Optionally show a confirmation the move was made successfully
-      // Commented out to avoid duplicate notifications
-      // toast.success(`Move: ${moveData?.san || ""}`, { 
-      //   position: "bottom-right", 
-      //   autoClose: 1000 
-      // });
-      return;
-    }
+  // Helper function to show move notifications based on device size
+  const showMobileAwareToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, options = {}) => {
+    const defaultOptions = isMobile.current ? 
+      {
+        position: "bottom-center" as const,
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        style: { fontSize: '14px', maxWidth: '90%' }
+      } : 
+      {
+        position: "bottom-right" as const,
+        autoClose: 3000,
+      };
     
-    // For spectators, show which color made the move
-    if (isSpectator) {
-      toast.info(`${moveColor === "white" ? "⚪ White" : "⚫ Black"} moved: ${moveData?.san || ""}`, {
-        position: "bottom-right",
-        autoClose: 2000
-      });
-      return;
-    }
-    
-    // For the opponent, just show the move
-    toast.info(`Opponent moved: ${moveData?.san || ""}`, {
-      position: "bottom-right",
-      autoClose: 2000
-    });
+    toast[type](message, { ...defaultOptions, ...options });
   };
+
+  // Track window resize to detect mobile devices
+  useEffect(() => {
+    const handleResize = () => {
+      isMobile.current = window.innerWidth < 768;
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Track connection status
   useEffect(() => {
     const onConnect = () => {
       console.log("Connected to WebSocket server");
       setConnectionStatus('connected');
-      toast.success("Connected to server", {
-        position: "bottom-right",
-        autoClose: 2000
-      });
+      showMobileAwareToast('success', "Connected to server");
     };
 
     const onDisconnect = () => {
       console.log("Disconnected from WebSocket server");
       setConnectionStatus('disconnected');
-      toast.error("Disconnected from server. Attempting to reconnect...", {
-        position: "bottom-right",
-        autoClose: 2000
-      });
+      showMobileAwareToast('error', "Disconnected from server");
     };
 
     const onConnectError = (error: any) => {
       console.error("Connection error:", error);
       setConnectionStatus('error');
-      toast.error("Failed to connect to server. Please check your connection.", {
-        position: "bottom-right",
-        autoClose: false
-      });
+      showMobileAwareToast('error', "Failed to connect to server", { autoClose: false });
     };
 
     // Set up event listeners
@@ -136,22 +126,14 @@ const App = () => {
       setGameOverMessage("");
       setWinner(null);
       
-      // Show success notification with game ID
-      toast.success(`Game created successfully! Game ID: ${gameId}`, {
-        position: "bottom-right",
-        autoClose: 5000,
-      });
+      showMobileAwareToast('success', `Game created! ID: ${gameId}`);
       
       // Copy the game ID to clipboard for easier sharing
       navigator.clipboard.writeText(gameId)
         .then(() => {
-          toast.info("Game ID copied to clipboard", {
-            position: "bottom-right",
-            autoClose: 1000,
-            delay: 1000
-          });
+          showMobileAwareToast('info', "Game ID copied to clipboard");
         })
-        .catch(err => console.error("Could not copy game ID to clipboard", err));
+        .catch(err => console.error("Could not copy game ID", err));
     });
 
     socket.on("gameJoined", ({ gameId, color }) => {
@@ -168,21 +150,15 @@ const App = () => {
       setGameOverMessage("");
       setWinner(null);
       
-      toast.success(`Successfully joined game with ID: ${gameId} as ${color}`, {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('success', `Joined game as ${color}`);
     });
     
     socket.on("opponentJoined", ({ color }) => {
-      toast.info(`Opponent joined as ${color}. Game starting!`, {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('info', `Opponent joined as ${color}`);
       setGameStarted(true);
     });
 
-    socket.on("joinedAsSpectator", ({ gameId, message, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
+    socket.on("joinedAsSpectator", ({ gameId, currentFen, moveHistory, whiteTime, blackTime, currentPlayer }) => {
       console.log("Joined as spectator:", { gameId, currentFen, moveHistory });
       setGameId(gameId);
       setIsSpectator(true);
@@ -202,7 +178,7 @@ const App = () => {
       
       // Process and set move history properly
       if (moveHistory && Array.isArray(moveHistory)) {
-        console.log("Processing received move history:", moveHistory);
+        console.log("Received move history:", moveHistory);
         
         // Convert all move objects to a consistent format
         const processedMoves = moveHistory.map(move => {
@@ -214,9 +190,8 @@ const App = () => {
             return `${move.from}-${move.to}`;
           }
           return '';
-        }).filter(Boolean); // Remove any empty entries
+        }).filter(Boolean);
         
-        console.log("Processed move history:", processedMoves);
         setMoveHistory(processedMoves);
         
         // Set the last move for highlighting if available
@@ -231,39 +206,19 @@ const App = () => {
         }
       }
       
-      toast.info(`Watching game ${gameId} as spectator`, {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('info', `Watching game ${gameId}`);
     });
 
-    socket.on("startGame", () => {
-      console.log(`Game started`);
-      setCurrentPlayer("white");
-      setGameStarted(true);
-      
-      toast.success("Game has started! White's turn.", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
-    });
-
-    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime, fromSocketId, playerColor: movePlayerColor }) => {
-      // Update local chess instance with the new FEN
-      console.log("Received move from server:", { fen, move, isWhiteTurn, movePlayerColor });
+    socket.on("move", ({ fen, move, isWhiteTurn, whiteTime, blackTime }) => {
+      console.log("Received move:", { fen, move, isWhiteTurn });
       
       try {
-        // Determine which player made the move (the opposite of isWhiteTurn)
-        const moveColor = isWhiteTurn ? "black" : "white"; // isWhiteTurn is the next player's turn
-        
-        // Load new position
         chess.load(fen);
         setFen(fen);
         
         // Update current player turn
         const newCurrentPlayer = isWhiteTurn ? "white" : "black";
         setCurrentPlayer(newCurrentPlayer);
-        console.log("Current player set to:", newCurrentPlayer);
         
         // Update timers if they were provided
         if (typeof whiteTime === 'number') setWhiteTime(whiteTime);
@@ -289,27 +244,15 @@ const App = () => {
           if (move.from && move.to) {
             setLastMove({from: move.from, to: move.to});
           }
-          
-          // Only show notification for appropriate situations
-          const fromCurrentPlayer = fromSocketId === socket.id;
-          showMoveNotification(move, fromCurrentPlayer, moveColor);
         }
       } catch (error) {
         console.error("Error processing move:", error);
       }
     });
 
-    socket.on("timerUpdate", ({ whiteTime, blackTime }) => {
-      setWhiteTime(whiteTime);
-      setBlackTime(blackTime);
-    });
-    
     socket.on("drawOffered", () => {
       setShowDrawDialog(true);
-      toast.info("Your opponent has offered a draw", {
-        position: "bottom-right",
-        autoClose: false
-      });
+      showMobileAwareToast('info', "Your opponent has offered a draw", { autoClose: false });
     });
 
     socket.on("gameOver", (result) => {
@@ -320,39 +263,24 @@ const App = () => {
       setWinner(winner);
       setGameStarted(false);
       
-      toast.info(message, {
-        position: "bottom-center",
-        autoClose: 10000
-      });
+      showMobileAwareToast('info', message, { autoClose: 10000 });
       
       if (timerRef.current) clearInterval(timerRef.current);
     });
 
     socket.on("error", (message) => {
-      toast.error(message, {
-        position: "bottom-right",
-        autoClose: 5000
-      });
+      showMobileAwareToast('error', message);
     });
-
-    const debugSocketEvent = (event: string, data: any) => {
-      console.log(`Socket event received: ${event}`, data);
-    };
-    
-    socket.onAny(debugSocketEvent);
 
     return () => {
       socket.off("gameCreated");
       socket.off("gameJoined");
       socket.off("opponentJoined");
       socket.off("joinedAsSpectator");
-      socket.off("startGame");
       socket.off("move");
-      socket.off("timerUpdate");
       socket.off("drawOffered");
       socket.off("gameOver");
       socket.off("error");
-      socket.offAny(debugSocketEvent);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
@@ -395,10 +323,7 @@ const App = () => {
   const handleReconnect = () => {
     setConnectionStatus('connecting');
     socket.connect();
-    toast.info("Attempting to reconnect...", {
-      position: "bottom-right",
-      autoClose: 2000
-    });
+    showMobileAwareToast('info', "Attempting to reconnect...");
   };
 
   // Game actions
@@ -409,19 +334,13 @@ const App = () => {
 
   const joinGame = () => {
     if (!joinGameId.trim()) {
-      toast.warning("Please enter a game ID", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', "Please enter a game ID");
       return;
     }
     
     // Check if user is trying to join their own game
     if (joinGameId === gameId) {
-      toast.error("You cannot join your own game!", {
-        position: "bottom-right",
-        autoClose: 5000
-      });
+      showMobileAwareToast('error', "You cannot join your own game!");
       return;
     }
     
@@ -431,10 +350,7 @@ const App = () => {
 
   const spectateGame = () => {
     if (!joinGameId.trim()) {
-      toast.warning("Please enter a game ID to spectate", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', "Please enter a game ID to spectate");
       return;
     }
     
@@ -445,30 +361,18 @@ const App = () => {
   const resignGame = () => {
     if (gameId && !isSpectator) {
       socket.emit("resignGame", { gameId, color: playerColor });
-      toast.info("You resigned the game", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('info', "You resigned the game");
     } else if (isSpectator) {
-      toast.warning("Spectators cannot resign games", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', "Spectators cannot resign games");
     }
   };
 
   const offerDraw = () => {
     if (gameId && !isSpectator) {
       socket.emit("offerDraw", { gameId, offeredBy: playerColor });
-      toast.info("Draw offered to opponent", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('info', "Draw offered to opponent");
     } else if (isSpectator) {
-      toast.warning("Spectators cannot offer draws", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', "Spectators cannot offer draws");
     }
   };
   
@@ -489,13 +393,10 @@ const App = () => {
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     // Check if spectator
     if (isSpectator) {
-      toast.warning("You are only watching the game", {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', "You are only watching the game");
       return false;
     }
-
+  
     // Get current turn from chess.js (w = white, b = black)
     const chessTurn = chess.turn() === 'w' ? "white" : "black";
     
@@ -508,13 +409,10 @@ const App = () => {
     
     // Check if it's this player's turn
     if (playerColor !== chessTurn) {
-      toast.warning(`It's ${chessTurn}'s turn. Please wait for your turn.`, {
-        position: "bottom-right",
-        autoClose: 3000
-      });
+      showMobileAwareToast('warning', `It's ${chessTurn}'s turn. Please wait for your turn.`);
       return false;
     }
-
+  
     // Try to make the move
     try {
       // Make the move
@@ -552,14 +450,7 @@ const App = () => {
           isWhiteTurn: isWhiteTurn,
           whiteTime, 
           blackTime,
-          fromPlayerId: socket.id,
-          playerColor: playerColor  // Add player color to the move data
-        });
-        
-        // Show a success toast for the player who made the move
-        toast.success(`You moved: ${move.san}`, {
-          position: "bottom-right",
-          autoClose: 1500
+          fromPlayerId: socket.id
         });
       }
       
@@ -681,7 +572,27 @@ const App = () => {
           </div>
         )}
         
-        <MobileToaster />
+        {/* Responsive Toast Container */}
+        <ToastContainer
+          position={isMobile.current ? "bottom-center" : "bottom-right"}
+          autoClose={3000}
+          hideProgressBar={isMobile.current}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss={!isMobile.current}
+          draggable={!isMobile.current}
+          pauseOnHover={!isMobile.current}
+          theme="light"
+          style={isMobile.current ? {
+            width: 'auto',
+            maxWidth: '90%',
+            bottom: '10px',
+            right: '10px',
+            left: '10px'
+          } : undefined}
+          toastClassName={isMobile.current ? "mobile-toast" : ""}
+        />
       </div>
     </Layout>
   );
