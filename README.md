@@ -60,7 +60,7 @@ A real-time online chess application built with React, TypeScript, and Socket.IO
     npm start
     ```
 
-4. **Open your browser** and navigate to `http://localhost:3000`
+4. **Open your browser** and navigate to `http://localhost:3001`
 
 ## How to Play
 
