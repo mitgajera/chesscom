@@ -4,7 +4,7 @@ import Layout from "./components/Layout";
 import Controls from "./components/Controls";
 import ResponsiveBoard from "./components/ResponsiveBoard";
 import GameInformation from "./components/GameInformation";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer, toast, ToastPosition, ToastOptions } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import socket from "./socket";
 import { enhanceForTouchDevices } from './utils/TouchEnhancer';
@@ -16,6 +16,21 @@ import "./styles/ToastFix.css";
 
 // Initialize chess instance
 const chess = new Chess();
+
+// Add this helper function at the top of your App component
+const generateGameId = (): string => {
+  // Define characters to use (alphanumeric)
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  
+  // Generate 6 random characters
+  for (let i = 0; i < 6; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars.charAt(randomIndex);
+  }
+  
+  return result;
+};
 
 const App = () => {
   // Add at the top of your component
@@ -32,8 +47,8 @@ const App = () => {
   const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, options = {}) => {
     const isMobileView = window.innerWidth < 768;
     
-    const defaultOptions = {
-      position: isMobileView ? "bottom-center" : "bottom-right",
+    const defaultOptions: ToastOptions = {
+      position: (isMobileView ? "bottom-center" : "bottom-right") as ToastPosition,
       autoClose: isMobileView ? 2000 : 4000,
       hideProgressBar: isMobileView,
       closeOnClick: true,
@@ -73,9 +88,9 @@ const App = () => {
 
   // Helper function to show move notifications based on device size
   const showMobileAwareToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, options = {}) => {
-    const defaultOptions = isMobile.current ? 
+    const defaultOptions: ToastOptions = isMobile.current ? 
       {
-        position: "bottom-center" as const,
+        position: "bottom-center" as ToastPosition,
         autoClose: 2000,
         hideProgressBar: true,
         closeOnClick: true,
@@ -84,7 +99,7 @@ const App = () => {
         style: { fontSize: '14px', maxWidth: '90%' }
       } : 
       {
-        position: "bottom-right" as const,
+        position: "bottom-right" as ToastPosition,
         autoClose: 3000,
       };
     
@@ -299,16 +314,43 @@ const App = () => {
       setWinner(winner);
       setGameStarted(false);
       
-      // Show different messages based on player type
+      // Improved game over notification logic
       if (isSpectator) {
-        const winnerColor = winner === 'white' ? 'White' : 'Black';
-        showToast('info', `Game over: ${winnerColor} ${winner ? 'won' : 'drew the game'}. ${message}`, { autoClose: 10000 });
+        // For spectators, show detailed game result information
+        if (winner) {
+          const winnerColor = winner === 'white' ? 'White' : 'Black';
+          const loserColor = winner === 'white' ? 'Black' : 'White';
+          showToast('info', `Game over: ${winnerColor} defeated ${loserColor}. ${message}`, { 
+            autoClose: 10000,
+            icon: winner === 'white' ? '♔' : '♚'
+          });
+        } else {
+          // Draw case for spectators
+          showToast('info', `Game over: The match ended in a draw. ${message}`, { 
+            autoClose: 10000,
+            icon: '🤝'
+          });
+        }
       } else if (winner === playerColor) {
-        showToast('success', `You won! ${message}`, { autoClose: 10000 });
+        // Winning player gets a success message
+        const opponentColor = playerColor === 'white' ? 'Black' : 'White';
+        showToast('success', `Congratulations! You won against ${opponentColor}! ${message}`, { 
+          autoClose: 10000,
+          icon: '🏆'
+        });
       } else if (winner) {
-        showToast('error', `You lost! ${message}`, { autoClose: 10000 });
+        // Losing player gets a different message
+        const opponentColor = playerColor === 'white' ? 'Black' : 'White';
+        showToast('error', `You lost to ${opponentColor}. ${message}`, { 
+          autoClose: 10000,
+          icon: '😞'
+        });
       } else {
-        showToast('info', `Game over: ${message}`, { autoClose: 10000 });
+        // Draw case for players
+        showToast('info', `The game ended in a draw. ${message}`, { 
+          autoClose: 10000,
+          icon: '🤝'
+        });
       }
       
       if (timerRef.current) clearInterval(timerRef.current);
@@ -396,11 +438,15 @@ const App = () => {
           isMobile.current = window.innerWidth < 768;
           
           // Force re-render or adjustment of the chess board
-          const currentWidth = chessBoardRef.current.clientWidth;
-          chessBoardRef.current.style.width = `${currentWidth - 1}px`;
-          setTimeout(() => {
-            chessBoardRef.current.style.width = '';
-          }, 50);
+          if (chessBoardRef.current) {
+            const currentWidth = chessBoardRef.current.clientWidth;
+            chessBoardRef.current.style.width = `${currentWidth - 1}px`;
+            setTimeout(() => {
+              if (chessBoardRef.current) {
+                chessBoardRef.current.style.width = '';
+              }
+            }, 50);
+          }
         }, 100);
       }
     };
@@ -422,7 +468,11 @@ const App = () => {
         if (chessBoardRef.current) {
           const currentWidth = chessBoardRef.current.clientWidth;
           chessBoardRef.current.style.width = `${currentWidth - 1}px`;
-          setTimeout(() => chessBoardRef.current.style.width = '', 50);
+          setTimeout(() => {
+            if (chessBoardRef.current) {
+              chessBoardRef.current.style.width = '';
+            }
+          }, 50);
         }
       }, 200);
     };
@@ -441,7 +491,12 @@ const App = () => {
   // Game actions
   const createGame = () => {
     console.log("Creating new game");
-    socket.emit("createGame");
+    // Generate a random 6-character game ID
+    const newGameId = generateGameId();
+    console.log("Generated game ID:", newGameId);
+    
+    // Send the generated ID to the server
+    socket.emit("createGame", { gameId: newGameId });
   };
 
   const joinGame = () => {
