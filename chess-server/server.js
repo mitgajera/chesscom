@@ -50,11 +50,13 @@ function generateGameId() {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id, 'using', socket.conn.transport.name);
 
-  socket.on("createGame", () => {
-    const gameId = generateGameId();
+  socket.on('createGame', ({ gameId }) => {
+    // Use the provided gameId or generate a new one if not provided
+    const finalGameId = gameId || generateGameId();
     
-    // Create new game state
-    games[gameId] = {
+    // Create the game with the specified ID
+    games[finalGameId] = {
+      id: finalGameId,
       creator: socket.id,
       whitePlayer: socket.id,
       blackPlayer: null,
@@ -66,13 +68,13 @@ io.on('connection', (socket) => {
       isGameActive: false
     };
     
-    // Add socket to the game room
-    socket.join(gameId);
+    // Join the socket to the game room
+    socket.join(finalGameId);
     
-    // Emit the gameCreated event with the game ID
-    socket.emit("gameCreated", { gameId });
+    // Send the game ID back to the client
+    socket.emit('gameCreated', { gameId: finalGameId });
     
-    console.log(`Game created with ID: ${gameId}`);
+    console.log(`Game created with ID: ${finalGameId}`);
   });
 
   // Logic for joining a game
