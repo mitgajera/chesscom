@@ -48,7 +48,7 @@ export function useToast() {
 }
 
 // Standalone toast function
-export function toast(options: ToastOptions) {
+export function useToastStandalone(options: ToastOptions) {
   const { toast } = useToast();
   toast(options);
 }

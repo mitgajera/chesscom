@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Chessboard } from 'react-chessboard';
-import { enhanceForTouchDevices, preventZoomOnBoard } from './TouchEnhancer';
+import { enhanceForTouchDevices, preventZoomOnBoard } from '../utils/TouchEnhancer';
 import '../styles/ChessBoard.css';
 
 const ResponsiveBoard = ({ 
@@ -13,7 +13,7 @@ const ResponsiveBoard = ({
   isSpectator,
   playerColor
 }) => {
-  const boardRef = useRef(null);
+  const boardRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const isTouchDevice = enhanceForTouchDevices();
@@ -27,11 +27,15 @@ const ResponsiveBoard = ({
       // Force redraw after orientation change
       if (boardRef.current) {
         setTimeout(() => {
-          const currentWidth = boardRef.current.offsetWidth;
-          boardRef.current.style.width = `${currentWidth - 1}px`;
-          setTimeout(() => {
-            boardRef.current.style.width = '';
-          }, 50);
+          if (boardRef.current) {
+            const currentWidth = boardRef.current.offsetWidth;
+            boardRef.current.style.width = `${currentWidth - 1}px`;
+            setTimeout(() => {
+              if (boardRef.current) {
+                boardRef.current.style.width = '';
+              }
+            }, 50);
+          }
         }, 300);
       }
     };
